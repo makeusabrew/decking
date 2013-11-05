@@ -1,42 +1,12 @@
 #!/usr/bin/env coffee
-
-fs = require "fs"
-child_process = require "child_process"
+Decking = require "../index.coffee"
 
 cmd = process.argv[2]
 
 throw "Arg required" if not cmd
 
-build = ->
-  source  = process.argv[3]
-  ###
-  image   = process.argv[3]
-  context = process.argv[4] || process.cwd()
-  ###
-  context = process.cwd()
-  path    = context + "/Dockerfile"
-
-  fs.symlinkSync source, path
-
-  buffer = fs.readFileSync path
-  str = buffer.toString "utf8"
-
-  [head, tail...] = str.split "\n"
-
-  matches = head.match /build as (.+)$/
-
-  throw "No valid meta line found" if not matches
-
-  image = matches[1]
-  console.log "Building docker image #{image}...\n"
-
-  db = child_process.spawn "docker", ["build", "-t", image, context]
-
-  db.stdout.on "data", (d) -> process.stdout.write d
-  db.stderr.on "data", (d) -> process.stderr.write d
-
-  db.on "exit", (code) ->
-    fs.unlinkSync path
+decking = new Decking process.argv
 
 switch cmd
-  when "build" then build()
+  when "build" then decking.build()
+  when "status" then decking.status()
