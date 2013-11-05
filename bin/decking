@@ -3,29 +3,40 @@
 fs = require "fs"
 child_process = require "child_process"
 
-source  = process.argv[2]
-image   = process.argv[3]
-context = process.argv[4] || process.cwd()
-path    = context + "/Dockerfile"
+cmd = process.argv[2]
 
-fs.symlinkSync source, path
+throw "Arg required" if not cmd
 
-buffer = fs.readFileSync path
-str = buffer.toString "utf8"
+build = ->
+  source  = process.argv[3]
+  ###
+  image   = process.argv[3]
+  context = process.argv[4] || process.cwd()
+  ###
+  context = process.cwd()
+  path    = context + "/Dockerfile"
 
-[head, tail...] = str.split "\n"
+  fs.symlinkSync source, path
 
-matches = head.match /build as (.+)$/
+  buffer = fs.readFileSync path
+  str = buffer.toString "utf8"
 
-throw "No valid meta line found" if not matches
+  [head, tail...] = str.split "\n"
 
-image = matches[1]
-console.log "Building docker image #{image}...\n"
+  matches = head.match /build as (.+)$/
 
-db = child_process.spawn "docker", ["build", "-t", image, context]
+  throw "No valid meta line found" if not matches
 
-db.stdout.on "data", (d) -> process.stdout.write d
-db.stderr.on "data", (d) -> process.stderr.write d
+  image = matches[1]
+  console.log "Building docker image #{image}...\n"
 
-db.on "exit", (code) ->
-  fs.unlinkSync path
+  db = child_process.spawn "docker", ["build", "-t", image, context]
+
+  db.stdout.on "data", (d) -> process.stdout.write d
+  db.stderr.on "data", (d) -> process.stderr.write d
+
+  db.on "exit", (code) ->
+    fs.unlinkSync path
+
+switch cmd
+  when "build" then build()
