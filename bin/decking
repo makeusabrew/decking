@@ -7,6 +7,11 @@ throw "Arg required" if not cmd
 
 decking = new Decking process.argv
 
-switch cmd
-  when "build" then decking.build()
-  when "status" then decking.status()
+throw "Invalid arg" if typeof decking[cmd] isnt "function"
+
+decking.prepare (err) ->
+
+  return decking.cleanup() if err
+
+  decking[cmd] (err) ->
+    decking.cleanup()
