@@ -1,5 +1,6 @@
 fs = require "fs"
 child_process = require "child_process"
+async = require "async"
 
 Docker = require "dockerode"
 docker = new Docker
@@ -15,13 +16,39 @@ class Decking
   parseConfig: (data) -> JSON.parse data
 
   loadConfig: (file) ->
-    @log "Loading metadata..."
+    @log "Loading package file..."
     @parseConfig fs.readFileSync file
 
   log: (data) -> @logger.write "#{data}\n"
 
-  build: (done) ->
-    [image] = @args
+  commands:
+    build: (done) ->
+      [image] = @args
+
+      if image is "all"
+        images = (key for key,val of @config.images)
+
+        async.eachSeries images,
+        (image, callback) =>
+          @build image, callback
+        , done
+      else
+        @build image, done
+
+    run: (done) ->
+      # @TODO use the remote API when it supports -name and -link
+      # @TODO check the target image exists locally, otherwise
+      # `docker run` will try to download it. we want to take care
+      # of dependency resolution ourselves
+      [container] = @args
+      @run container, done
+
+    status: (done) ->
+      child_process.exec "docker ps", (err, stdout, stderr) ->
+        process.stdout.write stdout
+        done()
+
+  build: (image, done) ->
 
     throw new Error("Please supply an image name to build") if not image
 
@@ -47,21 +74,11 @@ class Decking
       fs.unlinkSync "./Dockerfile"
       docker.buildImage "/tmp/test.tar.bz2", options, (err, res) ->
         res.pipe process.stdout
+        res.on "end", =>
+          # @TODO remove tarball
+          done()
 
-  status: (done) ->
-    child_process.exec "docker ps", (err, stdout, stderr) ->
-      process.stdout.write stdout
-      done()
-
-  run: (done) ->
-    # @TODO use the remote API when it supports -name and -link
-    # @TODO check the target image exists locally, otherwise
-    # `docker run` will try to download it. we want to take care
-    # of dependency resolution ourselves
-    [container] = @args
-    @_run container, done
-
-  _run: (container, done) ->
+  run: (container, done) ->
 
     throw new Error("Please supply a container to run") if not container
 
@@ -107,7 +124,7 @@ class Decking
     return arg
 
   execute: (done) ->
-    fn = this[@command]
+    fn = @commands[@command]
 
     throw new Error("Invalid arg") if typeof fn isnt "function"
 
