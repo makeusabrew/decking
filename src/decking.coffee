@@ -4,9 +4,9 @@ child_process = require "child_process"
 
 class Decking
   # @TODO get rid of args, should be options by the time they get here?
-  constructor: (args) ->
+  constructor: (options) ->
     @mode = "dev" # @TODO from args
-    @source  = args[3]
+    {@command, @source} = options
     @context = process.cwd()
     @path    = @context + "/Dockerfile"
 
@@ -68,5 +68,17 @@ class Decking
     dr.stderr.on "data", (d) -> process.stderr.write d
 
     dr.on "exit", (code) -> done()
+
+
+  execute: (done) ->
+    fn = this[@command]
+
+    throw new Error("Invalid arg") if typeof fn isnt "function"
+
+    @prepare (err) =>
+
+      return @cleanup() if err
+
+      fn.call this, (err) => @cleanup()
 
 module.exports = Decking

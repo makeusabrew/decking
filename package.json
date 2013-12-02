@@ -1,0 +1,21 @@
+{
+  "name": "decking",
+  "version": "0.0.1",
+  "description": "A Docker helper to create, manage and run clusters of containers",
+  "main": "index.js",
+  "preferGlobal": true,
+  "scripts": {
+    "prepublish": "grunt"
+  },
+  "bin": {
+      "decking": "./bin/decking.js"
+  },
+  "author": "Nick Payne",
+  "license": "MIT",
+  "devDependencies": {
+    "grunt": "~0.4.2"
+  },
+  "dependencies": {
+    "dockerode": "~0.2.2"
+  }
+}

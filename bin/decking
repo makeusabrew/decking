@@ -1,17 +1,10 @@
 #!/usr/bin/env coffee
 Decking = require "../index.coffee"
 
-cmd = process.argv[2]
+options =
+  command: process.argv[2]
+  source:  process.argv[3]
 
-throw "Arg required" if not cmd
+decking = new Decking options
 
-decking = new Decking process.argv
-
-throw "Invalid arg" if typeof decking[cmd] isnt "function"
-
-decking.prepare (err) ->
-
-  return decking.cleanup() if err
-
-  decking[cmd] (err) ->
-    decking.cleanup()
+decking.execute()
