@@ -12,6 +12,9 @@ on a project by project basis.
 To use the Docker Remote API wherever possible (not everywhere, does
 not appear to support -name and -link flags yet).
 
+See [nodeflakes/decking.json](https://github.com/makeusabrew/nodeflakes/blob/master/decking.json)
+for a *very* rough example!
+
 ## Methods
 
 None of the below are fully implemented yet, but they're the rough
