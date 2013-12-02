@@ -15,6 +15,10 @@ not appear to support -name and -link flags yet).
 See [nodeflakes/decking.json](https://github.com/makeusabrew/nodeflakes/blob/master/decking.json)
 for a *very* rough example!
 
+## Installation
+
+Don't yet - decking is too unstable at the moment.
+
 ## Methods
 
 None of the below are fully implemented yet, but they're the rough
