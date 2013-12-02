@@ -9,6 +9,9 @@ of Docker containers in a way which is familiar to developers;
 by reading container information from a `decking.json` package file
 on a project by project basis.
 
+To use the Docker Remote API wherever possible (not everywhere, does
+not appear to support -name and -link flags yet).
+
 ## Methods
 
 None of the below are fully implemented yet, but they're the rough
