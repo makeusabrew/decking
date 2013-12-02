@@ -2,27 +2,33 @@
 
 ## Project goals
 
-To abstract some of the slightly more inconvenient docker mechanisms
-into quick, clear and repeatable commands.
+(Update 2nd December 2013: these have changed somewhat!)
 
-Different environments should be supported to allow variations of
-commands in development, test, ci and production.
+To simplify the creation, management and running of clusters
+of Docker containers in a way which is familiar to developers;
+by reading container information from a `decking.json` package file
+on a project by project basis.
 
-### build
+## Methods
+
+None of the below are fully implemented yet, but they're the rough
+roadmap for the short term future.
+
+### build (image | all)
 
 Alleviate the inconvenience of ADD requiring a local (./ downwards)
 context.
 
-Take the image name from the Dockerfile, if supplied in expected format
-
-Use standard directory layouts to be able to find Dockerfiles with
-single word string arguments.
-
 Rebuild all parent images, or up to a level specified (e.g. --parents=1)
 
-### run
+### run (container)
 
-Take run args from Dockerfile meta if supplied in expected format.
+Take run args from package file if supplied in expected format.
+
+### cluster (start | stop) [name]
+
+Define groups of related containers which conceptually form part of
+a cluster.
 
 Allow dependencies to be specified, e.g. containers used as links
 can be started in advance.
