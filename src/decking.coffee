@@ -35,18 +35,111 @@ class Decking
       else
         @build image, done
 
-    run: (done) ->
-      # @TODO use the remote API when it supports -name and -link
-      # @TODO check the target image exists locally, otherwise
-      # `docker run` will try to download it. we want to take care
-      # of dependency resolution ourselves
+    create: (done) ->
+      # create a container based on metadata
+      # for now due to remote API limitations this
+      # is going to be a `run` followed quickly by a `stop`
       [container] = @args
-      @run container, done
+      @create container, done
+
+    start: (done) ->
+      [container] = @args
+      @start container, done
+
+    stop: (done) ->
+      [container] = @args
+      @stop container, done
+
+    cluster: (done) ->
+      [method, cluster] = @args
+      switch method
+        when "start" then @cluster_start cluster, done
+        when "stop" then @cluster_stop cluster, done
 
     status: (done) ->
       child_process.exec "docker ps", (err, stdout, stderr) ->
         process.stdout.write stdout
         done()
+
+  start: (container, done) ->
+    throw new Error("Please supply a container to start") if not container
+
+    target = @config.containers[container]
+
+    throw new Error("Container #{container} does not exist in decking.json") if not target
+
+    container = docker.getContainer container
+    container.start done
+
+  stop: (container, done) ->
+    throw new Error("Please supply a container to stop") if not container
+
+    target = @config.containers[container]
+
+    throw new Error("Container #{container} does not exist in decking.json") if not target
+
+    container = docker.getContainer container
+    container.stop done
+
+  create: (container, done) ->
+    # @TODO use the remote API when it supports -name and -link
+    # @TODO check the target image exists locally, otherwise
+    # `docker run` will try to download it. we want to take care
+    # of dependency resolution ourselves
+    throw new Error("Please supply a container to create") if not container
+
+    target = @config.containers[container]
+
+    throw new Error("Container #{container} does not exist in decking.json") if not target
+
+    cmdArgs = ["docker", "run", "-d", "-name", "#{container}"]
+    cmdArgs = [].concat cmdArgs, @getRunArg key, val for key,val of target
+
+    doRun = =>
+      cmdArgs.push target.image
+
+      child_process.exec cmdArgs.join(" "), ->
+        setTimeout ->
+          child_process.exec "docker stop #{container}", done
+        , 500
+
+    depLength = target.dependencies?.length || 0
+
+    return doRun() if not depLength
+
+    for dependency in target.dependencies
+      [container, alias] = dependency.split ":"
+      @log "Creating dependency #{container}"
+      cmdArgs.push "-link"
+      cmdArgs.push dependency
+      do =>
+        @create container, =>
+          depLength -= 1
+          if depLength is 0
+            doRun()
+
+  cluster_start: (cluster, done) ->
+    throw new Error("Please supply a cluster to start") if not cluster
+
+    target = @config.clusters[cluster]
+
+    throw new Error("Cluster #{cluster} does not exist in decking.json") if not target
+
+    # @TODO get this in dependency order
+    async.eachSeries target, (container, callback) =>
+      @start container, callback
+    , done
+
+  cluster_stop: (cluster, done) ->
+    throw new Error("Please supply a cluster to stop") if not cluster
+
+    target = @config.clusters[cluster]
+
+    throw new Error("Cluster #{cluster} does not exist in decking.json") if not target
+
+    async.eachSeries target, (container, callback) =>
+      @stop container, callback
+    , done
 
   build: (image, done) ->
 
@@ -78,40 +171,6 @@ class Decking
           # @TODO remove tarball
           done()
 
-  run: (container, done) ->
-
-    throw new Error("Please supply a container to run") if not container
-
-    target = @config.containers[container]
-
-    throw new Error("Container #{container} does not exist in decking.json") if not target
-
-    cmdArgs = ["run", "-d", "-name", "#{container}"]
-    cmdArgs = [].concat cmdArgs, @getRunArg key, val for key,val of target
-
-    doRun = =>
-      cmdArgs.push target.image
-
-      stream = child_process.spawn "docker", cmdArgs
-      stream.stdout.pipe process.stdout
-      stream.stderr.pipe process.stderr
-      stream.on "exit", done
-
-    depLength = target.dependencies?.length || 0
-
-    if depLength
-      for dependency in target.dependencies
-        [container, alias] = dependency.split ":"
-        @log "Resolving dependency on #{container}"
-        cmdArgs.push "-link"
-        cmdArgs.push dependency
-        do =>
-          @_run container, =>
-            depLength -= 1
-            if depLength is 0
-              doRun()
-    else
-      doRun()
 
   getRunArg: (key, val) ->
     arg = []
@@ -119,7 +178,9 @@ class Decking
       when "port"
         arg = ["-p", "#{val[0]}"]
       when "env"
-        arg = [].concat arg, ["-e", "#{k}=#{v}"] for k,v of val
+          for k,v of val
+            if v is "-" then v = process.env[k]
+            arg = [].concat arg, ["-e", "#{k}=#{v}"]
 
     return arg
 
@@ -128,7 +189,7 @@ class Decking
 
     throw new Error("Invalid arg") if typeof fn isnt "function"
 
-    return fn.call this, (err) => console.log "DONE", "ERR?", err
+    return fn.call this, (err) => throw err if err
 
     ###
     @prepare (err) =>

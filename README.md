@@ -24,9 +24,17 @@ context.
 
 Rebuild all parent images, or up to a level specified (e.g. --parents=1)
 
-### run (container)
+### create (container)
 
 Take run args from package file if supplied in expected format.
+
+### start (container)
+
+Start a container (must call `create` first - for now)
+
+### stop (container)
+
+Stop a running container
 
 ### cluster (start | stop) [name]
 
