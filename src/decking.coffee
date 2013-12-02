@@ -1,58 +1,52 @@
 fs = require "fs"
 child_process = require "child_process"
 
+Docker = require "dockerode"
+docker = new Docker
+  socketPath: "/var/run/docker.sock"
 
 class Decking
-  # @TODO get rid of args, should be options by the time they get here?
   constructor: (options) ->
-    @mode = "dev" # @TODO from args
-    {@command, @source} = options
-    @context = process.cwd()
-    @path    = @context + "/Dockerfile"
+    @logger = process.stdout
+    {@command, @args} = options
 
-  prepare: (done) ->
-    # @TODO deal with pre-existing file, make async
-    fs.symlinkSync @source, @path
+    @config = @loadConfig "./decking.json"
 
-    buffer = fs.readFileSync @path
-    # @TODO handle read error, make async
-    buffer = buffer.toString "utf8"
+  parseConfig: (data) -> JSON.parse data
 
-    lines = buffer.split "\n"
+  loadConfig: (file) ->
+    @log "Loading metadata..."
+    @parseConfig fs.readFileSync file
 
-    @commands =
-      run: ""
-      build: ""
-
-    for line in lines
-      matches = line.match /^#\s+decking:\s+(build|run)(\((\w+)\))?\s+as\s+(.+)$/
-      if matches
-        [_, cmd, _, mode, args] = matches
-        if !mode or mode is @mode
-          @commands[cmd] = args
-
-    if lines.length
-      done()
-    else
-      done "No meta data found"
-
-  cleanup: ->
-    fs.unlinkSync @path
+  log: (data) -> @logger.write "#{data}\n"
 
   build: (done) ->
+    [image] = @args
 
-    return done "No image specified" if !@commands.build
+    throw new Error("Please supply an image name to build") if not image
 
-    image = @commands.build
+    @log "Looking up build data for #{image}"
 
-    console.log "Building docker image #{image}...\n"
+    target = @config.images[image]
 
-    db = child_process.spawn "docker", ["build", "-t", image, @context]
+    throw new Error("Image #{image} does not exist in decking.json") if not target
 
-    db.stdout.on "data", (d) -> process.stdout.write d
-    db.stderr.on "data", (d) -> process.stderr.write d
+    targetPath = "#{target}/Dockerfile"
 
-    db.on "exit", (code) -> done()
+    @log "Building image #{image} from #{targetPath}"
+    @log ""
+
+    # @TODO for now, always assume we want to build from a Dockerfile
+    # @TODO need a lot of careful validation here
+    fs.createReadStream(targetPath).pipe fs.createWriteStream("./Dockerfile")
+
+    options =
+      t: image
+
+    child_process.exec "tar -cjf /tmp/test.tar.bz2 ./", ->
+      fs.unlinkSync "./Dockerfile"
+      docker.buildImage "/tmp/test.tar.bz2", options, (err, res) ->
+        res.pipe process.stdout
 
   status: (done) ->
     child_process.exec "docker ps", (err, stdout, stderr) ->
@@ -75,10 +69,14 @@ class Decking
 
     throw new Error("Invalid arg") if typeof fn isnt "function"
 
+    return fn.call this, (err) =>
+
+    ###
     @prepare (err) =>
 
       return @cleanup() if err
 
       fn.call this, (err) => @cleanup()
+   ###
 
 module.exports = Decking
