@@ -54,22 +54,64 @@ class Decking
       done()
 
   run: (done) ->
-    args = @commands.run.split " "
+    # @TODO use the remote API when it supports -name and -link
+    # @TODO check the target image exists locally, otherwise
+    # `docker run` will try to download it. we want to take care
+    # of dependency resolution ourselves
+    [container] = @args
+    @_run container, done
 
-    dr = child_process.spawn "docker", args.slice 1
+  _run: (container, done) ->
 
-    dr.stdout.on "data", (d) -> process.stdout.write d
-    dr.stderr.on "data", (d) -> process.stderr.write d
+    throw new Error("Please supply a container to run") if not container
 
-    dr.on "exit", (code) -> done()
+    target = @config.containers[container]
 
+    throw new Error("Container #{container} does not exist in decking.json") if not target
+
+    cmdArgs = ["run", "-d", "-name", "#{container}"]
+    cmdArgs = [].concat cmdArgs, @getRunArg key, val for key,val of target
+
+    doRun = =>
+      cmdArgs.push target.image
+
+      stream = child_process.spawn "docker", cmdArgs
+      stream.stdout.pipe process.stdout
+      stream.stderr.pipe process.stderr
+      stream.on "exit", done
+
+    depLength = target.dependencies?.length || 0
+
+    if depLength
+      for dependency in target.dependencies
+        [container, alias] = dependency.split ":"
+        @log "Resolving dependency on #{container}"
+        cmdArgs.push "-link"
+        cmdArgs.push dependency
+        do =>
+          @_run container, =>
+            depLength -= 1
+            if depLength is 0
+              doRun()
+    else
+      doRun()
+
+  getRunArg: (key, val) ->
+    arg = []
+    switch key
+      when "port"
+        arg = ["-p", "#{val[0]}"]
+      when "env"
+        arg = [].concat arg, ["-e", "#{k}=#{v}"] for k,v of val
+
+    return arg
 
   execute: (done) ->
     fn = this[@command]
 
     throw new Error("Invalid arg") if typeof fn isnt "function"
 
-    return fn.call this, (err) =>
+    return fn.call this, (err) => console.log "DONE", "ERR?", err
 
     ###
     @prepare (err) =>
