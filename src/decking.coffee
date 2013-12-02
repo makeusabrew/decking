@@ -97,8 +97,10 @@ class Decking
 
     doRun = =>
       cmdArgs.push target.image
+      @log "Creating container #{container}"
 
-      child_process.exec cmdArgs.join(" "), ->
+      child_process.exec cmdArgs.join(" "), (err) ->
+        # @TODO handle err properly
         setTimeout ->
           child_process.exec "docker stop #{container}", done
         , 500
@@ -125,6 +127,8 @@ class Decking
 
     throw new Error("Cluster #{cluster} does not exist in decking.json") if not target
 
+    @log "Starting cluster #{cluster} with #{target.length} containers"
+
     # @TODO get this in dependency order
     async.eachSeries target, (container, callback) =>
       @start container, callback
@@ -136,6 +140,8 @@ class Decking
     target = @config.clusters[cluster]
 
     throw new Error("Cluster #{cluster} does not exist in decking.json") if not target
+
+    @log "Stopping cluster #{cluster} with #{target.length} containers"
 
     async.eachSeries target, (container, callback) =>
       @stop container, callback
@@ -190,13 +196,5 @@ class Decking
     throw new Error("Invalid arg") if typeof fn isnt "function"
 
     return fn.call this, (err) => throw err if err
-
-    ###
-    @prepare (err) =>
-
-      return @cleanup() if err
-
-      fn.call this, (err) => @cleanup()
-   ###
 
 module.exports = Decking
