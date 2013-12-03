@@ -69,3 +69,4 @@ Simple shortcut for `docker ps`
 * allow shorthand container declarations when only key is image
 * allow dependencies to just specify container name if alias is the same
 * allow container image to be omitted if other keys are present; fuzzy match on images object
+* ensure all dependencies and errors are resolved before starting an action; e.g. don't "create" recursively; line up the create commands then iterate
