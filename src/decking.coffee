@@ -11,6 +11,7 @@ docker = new Docker
 logger = process.stdout
 log = (data) -> logger.write "#{data}\n"
 
+module.exports =
 class Decking
   constructor: (options) ->
     {@command, @args} = options
@@ -57,8 +58,8 @@ class Decking
       # create a container based on metadata
       # for now due to remote API limitations this
       # is going to be a `run` followed quickly by a `stop`
-      [container] = @args
-      @create container, done
+      [cluster] = @args
+      @create cluster, done
 
     start: (done) ->
       [cluster] = @args
@@ -124,44 +125,42 @@ class Decking
               callback null
         , done
 
-  create: (container, done) ->
+  create: (cluster, done) ->
     # @TODO use the remote API when it supports -name and -link
     # @TODO check the target image exists locally, otherwise
     # `docker run` will try to download it. we want to take care
     # of dependency resolution ourselves
-    throw new Error("Please supply a container to create") if not container
+    throw new Error "Please supply a cluster to create" if not cluster
 
-    target = @config.containers[container]
+    target = @config.clusters[cluster]
 
-    throw new Error("Container #{container} does not exist in decking.json") if not target
+    throw new Error "Cluster #{cluster} does not exist in decking.json"  if not target
 
-    cmdArgs = ["docker", "run", "-d", "-name", "#{container}"]
-    cmdArgs = [].concat cmdArgs, @getRunArg key, val for key,val of target
+    resolveOrder @config, target, (list) ->
+      async.eachSeries list, (details, callback) ->
 
-    doRun = ->
-      cmdArgs.push target.image
-      log "Creating container #{container}"
+        name = details.name
 
-      child_process.exec cmdArgs.join(" "), (err) ->
-        # @TODO handle err properly
-        setTimeout ->
-          child_process.exec "docker stop #{container}", done
-        , 500
+        container = docker.getContainer name
+        container.inspect (err, data) ->
+          if not err
+            log "Container #{name} already exists, skipping..."
+            return callback null
 
-    depLength = target.dependencies?.length || 0
+          cmdArgs = ["docker", "run", "-d", "-name", "#{name}"]
+          cmdArgs = [].concat cmdArgs, getRunArg key, val, details for key,val of details
+          cmdArgs.push details.image
 
-    return doRun() if not depLength
+          cmdString = cmdArgs.join " "
 
-    for dependency in target.dependencies
-      [container, alias] = dependency.split ":"
-      log "Creating dependency #{container}"
-      cmdArgs.push "-link"
-      cmdArgs.push dependency
-      do =>
-        @create container, ->
-          depLength -= 1
-          if depLength is 0
-            doRun()
+          log "Running container with args #{cmdString}"
+
+          child_process.exec cmdString, (err) ->
+            return callback err if err
+            setTimeout ->
+              child_process.exec "docker stop #{name}", callback
+            , 500
+      , done
 
   build: (image, done) ->
 
@@ -201,26 +200,12 @@ class Decking
           fs.unlink tarball, done
 
 
-  getRunArg: (key, val) ->
-    arg = []
-    switch key
-      when "port"
-        arg = ["-p", "#{val[0]}"]
-      when "env"
-        for k,v of val
-          if v is "-" then v = process.env[k]
-          arg = [].concat arg, ["-e", "#{k}=#{v}"]
-
-    return arg
-
   execute: (done) ->
     fn = @commands[@command]
 
     throw new Error("Invalid arg") if typeof fn isnt "function"
 
     return fn.call this, (err) -> throw err if err
-
-module.exports = Decking
 
 resolveOrder = (config, cluster, callback) ->
   containerDetails = {}
@@ -249,3 +234,20 @@ validateContainerPresence = (list, done) ->
     container.inspect callback
 
   async.eachSeries list, iterator, done
+
+getRunArg = (key, val, object) ->
+  arg = []
+  switch key
+    when "port"
+      arg = ["-p", "#{val[0]}"]
+    when "env"
+      for k,v of val
+        [key, value] = v.split "="
+        if value is "-" then value = process.env[key]
+        arg = [].concat arg, ["-e", "#{key}=#{value}"]
+    when "dependencies"
+      for v,k in val
+        alias = object.aliases[k]
+        arg = [].concat arg, ["-link #{v}:#{alias}"]
+
+  return arg

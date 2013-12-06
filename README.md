@@ -38,22 +38,18 @@ Take run args from package file if supplied in expected format.
 Allow dependencies to be specified, e.g. containers used as links
 will be created first such that they can be linked properly
 
-### start (container)
+### start (cluster)
 
-Start a container (must call `create` first - for now)
+Start a cluster (must call `create` first - for now)
 
-### stop (container)
+### stop (cluster)
 
-Stop a running container
-
-### cluster (start | stop) [name]
-
-Define groups of related containers which conceptually form part of
-a cluster (containers must have been created first, for now)
+Stop a running cluster
 
 ### status
 
-Simple shortcut for `docker ps`
+Simple shortcut for `docker ps`. Should actually give you the status of
+a particular cluster.
 
 ## TODO
 
