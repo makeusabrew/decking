@@ -1,14 +1,17 @@
-fs = require "fs"
+fs            = require "fs"
 child_process = require "child_process"
-async = require "async"
+async         = require "async"
+uuid          = require "node-uuid"
 
 Docker = require "dockerode"
 docker = new Docker
   socketPath: "/var/run/docker.sock"
 
+logger = process.stdout
+log = (data) -> logger.write "#{data}\n"
+
 class Decking
   constructor: (options) ->
-    @logger = process.stdout
     {@command, @args} = options
 
     @config = @loadConfig "./decking.json"
@@ -16,10 +19,8 @@ class Decking
   parseConfig: (data) -> JSON.parse data
 
   loadConfig: (file) ->
-    @log "Loading package file..."
+    log "Loading package file..."
     @parseConfig fs.readFileSync file
-
-  log: (data) -> @logger.write "#{data}\n"
 
   commands:
     build: (done) ->
@@ -95,9 +96,9 @@ class Decking
     cmdArgs = ["docker", "run", "-d", "-name", "#{container}"]
     cmdArgs = [].concat cmdArgs, @getRunArg key, val for key,val of target
 
-    doRun = =>
+    doRun = ->
       cmdArgs.push target.image
-      @log "Creating container #{container}"
+      log "Creating container #{container}"
 
       child_process.exec cmdArgs.join(" "), (err) ->
         # @TODO handle err properly
@@ -111,11 +112,11 @@ class Decking
 
     for dependency in target.dependencies
       [container, alias] = dependency.split ":"
-      @log "Creating dependency #{container}"
+      log "Creating dependency #{container}"
       cmdArgs.push "-link"
       cmdArgs.push dependency
       do =>
-        @create container, =>
+        @create container, ->
           depLength -= 1
           if depLength is 0
             doRun()
@@ -127,7 +128,7 @@ class Decking
 
     throw new Error("Cluster #{cluster} does not exist in decking.json") if not target
 
-    @log "Starting cluster #{cluster} with #{target.length} containers"
+    log "Starting cluster #{cluster} with #{target.length} containers"
 
     # @TODO get this in dependency order
     async.eachSeries target, (container, callback) =>
@@ -141,7 +142,7 @@ class Decking
 
     throw new Error("Cluster #{cluster} does not exist in decking.json") if not target
 
-    @log "Stopping cluster #{cluster} with #{target.length} containers"
+    log "Stopping cluster #{cluster} with #{target.length} containers"
 
     async.eachSeries target, (container, callback) =>
       @stop container, callback
@@ -151,7 +152,7 @@ class Decking
 
     throw new Error("Please supply an image name to build") if not image
 
-    @log "Looking up build data for #{image}"
+    log "Looking up build data for #{image}"
 
     target = @config.images[image]
 
@@ -159,8 +160,7 @@ class Decking
 
     targetPath = "#{target}/Dockerfile"
 
-    @log "Building image #{image} from #{targetPath}"
-    @log ""
+    log "Building image #{image} from #{targetPath}"
 
     # @TODO for now, always assume we want to build from a Dockerfile
     # @TODO need a lot of careful validation here
@@ -169,13 +169,21 @@ class Decking
     options =
       t: image
 
-    child_process.exec "tar -cjf /tmp/test.tar.bz2 ./", ->
-      fs.unlinkSync "./Dockerfile"
-      docker.buildImage "/tmp/test.tar.bz2", options, (err, res) ->
+    tarball = "/tmp/decking-#{uuid.v4()}.tar.bz"
+    log "Creating tarball to upload context..."
+
+    child_process.exec "tar -cjf #{tarball} ./", ->
+
+      fs.unlink "./Dockerfile", (err) -> log "[WARN] Could not remove Dockerfile" if err
+
+      log "Uploading tarball..."
+      docker.buildImage tarball, options, (err, res) ->
+
         res.pipe process.stdout
-        res.on "end", =>
-          # @TODO remove tarball
-          done()
+
+        res.on "end", ->
+          log "Cleaning up..."
+          fs.unlink tarball, done
 
 
   getRunArg: (key, val) ->
@@ -184,9 +192,9 @@ class Decking
       when "port"
         arg = ["-p", "#{val[0]}"]
       when "env"
-          for k,v of val
-            if v is "-" then v = process.env[k]
-            arg = [].concat arg, ["-e", "#{k}=#{v}"]
+        for k,v of val
+          if v is "-" then v = process.env[k]
+          arg = [].concat arg, ["-e", "#{k}=#{v}"]
 
     return arg
 
@@ -195,6 +203,6 @@ class Decking
 
     throw new Error("Invalid arg") if typeof fn isnt "function"
 
-    return fn.call this, (err) => throw err if err
+    return fn.call this, (err) -> throw err if err
 
 module.exports = Decking

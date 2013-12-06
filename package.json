@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "dockerode": "~0.2.2",
-    "async": "~0.2.9"
+    "async": "~0.2.9",
+    "node-uuid": "~1.4.1"
   }
 }
