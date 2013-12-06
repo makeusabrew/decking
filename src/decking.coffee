@@ -65,14 +65,8 @@ class Decking
       @start cluster, done
 
     stop: (done) ->
-      [container] = @args
-      @stop container, done
-
-    cluster: (done) ->
-      [method, cluster] = @args
-      switch method
-        when "start" then @cluster_start cluster, done
-        when "stop" then @cluster_stop cluster, done
+      [cluster] = @args
+      @stop cluster, done
 
     status: (done) ->
       child_process.exec "docker ps", (err, stdout, stderr) ->
@@ -90,28 +84,45 @@ class Decking
 
     resolveOrder @config, target, (list) ->
 
-      async.eachSeries list, (details, callback) ->
-        name = details.name
-        container = docker.getContainer name
-        container.inspect (err, data) ->
-          if not data.State.Running
-            log "Starting container #{name}"
-            container.start callback
-          else
-            log "Container #{name} already running..."
-            callback null
-      , done
+      validateContainerPresence list, (err) ->
+        return done err if err
+
+        async.eachSeries list, (details, callback) ->
+          name = details.name
+          container = docker.getContainer name
+          container.inspect (err, data) ->
+            if not data.State.Running
+              log "Starting container #{name}"
+              container.start callback
+            else
+              log "Container #{name} already running..."
+              callback null
+        , done
 
 
-  stop: (container, done) ->
-    throw new Error("Please supply a container to stop") if not container
+  stop: (cluster, done) ->
+    throw new Error "Please supply a cluster to stop" if not cluster
 
-    target = @config.containers[container]
+    target = @config.clusters[cluster]
 
-    throw new Error("Container #{container} does not exist in decking.json") if not target
+    throw new Error "Cluster #{cluster} does not exist in decking.json"  if not target
 
-    container = docker.getContainer container
-    container.stop done
+    resolveOrder @config, target, (list) ->
+
+      validateContainerPresence list, (err) ->
+        return done err if err
+
+        async.eachSeries list, (details, callback) ->
+          name = details.name
+          container = docker.getContainer name
+          container.inspect (err, data) ->
+            if data.State.Running
+              log "Stopping container #{name}"
+              container.stop callback
+            else
+              log "Container #{name} is not running..."
+              callback null
+        , done
 
   create: (container, done) ->
     # @TODO use the remote API when it supports -name and -link
@@ -151,33 +162,6 @@ class Decking
           depLength -= 1
           if depLength is 0
             doRun()
-
-  cluster_start: (cluster, done) ->
-    throw new Error("Please supply a cluster to start") if not cluster
-
-    target = @config.clusters[cluster]
-
-    throw new Error("Cluster #{cluster} does not exist in decking.json") if not target
-
-    log "Starting cluster #{cluster} with #{target.length} containers"
-
-    # @TODO get this in dependency order
-    async.eachSeries target, (container, callback) =>
-      @start container, callback
-    , done
-
-  cluster_stop: (cluster, done) ->
-    throw new Error("Please supply a cluster to stop") if not cluster
-
-    target = @config.clusters[cluster]
-
-    throw new Error("Cluster #{cluster} does not exist in decking.json") if not target
-
-    log "Stopping cluster #{cluster} with #{target.length} containers"
-
-    async.eachSeries target, (container, callback) =>
-      @stop container, callback
-    , done
 
   build: (image, done) ->
 
@@ -257,3 +241,11 @@ resolveOrder = (config, cluster, callback) ->
   list = (containerDetails[item] for item in depTree.resolve())
 
   callback list
+
+validateContainerPresence = (list, done) ->
+  iterator = (details, callback) ->
+    name = details.name
+    container = docker.getContainer name
+    container.inspect callback
+
+  async.eachSeries list, iterator, done
