@@ -16,11 +16,26 @@ class Decking
 
     @config = @loadConfig "./decking.json"
 
+  processConfig: (config) ->
+    for name, details of config.containers
+      if typeof details is "string"
+        details = config.containers[name] =
+          image: details
+
+      details.dependencies = [] if not details.dependencies
+      details.aliases = []
+      for dependency,i in details.dependencies
+        [name, alias] = dependency.split ":"
+        details.dependencies[i] = name
+        details.aliases[i] = alias
+
+    return config
+
   parseConfig: (data) -> JSON.parse data
 
   loadConfig: (file) ->
     log "Loading package file..."
-    @parseConfig fs.readFileSync file
+    @processConfig @parseConfig fs.readFileSync file
 
   commands:
     build: (done) ->
@@ -44,8 +59,8 @@ class Decking
       @create container, done
 
     start: (done) ->
-      [container] = @args
-      @start container, done
+      [cluster] = @args
+      @start cluster, done
 
     stop: (done) ->
       [container] = @args
@@ -62,15 +77,29 @@ class Decking
         process.stdout.write stdout
         done()
 
-  start: (container, done) ->
-    throw new Error("Please supply a container to start") if not container
+  start: (cluster, done) ->
+    throw new Error "Please supply a cluster to start" if not cluster
 
-    target = @config.containers[container]
+    target = @config.clusters[cluster]
 
-    throw new Error("Container #{container} does not exist in decking.json") if not target
+    throw new Error "Cluster #{cluster} does not exist in decking.json"  if not target
 
-    container = docker.getContainer container
-    container.start done
+    log "Resolving dependencies for cluster #{cluster}"
+
+    resolveOrder @config, target, (list) ->
+
+      async.eachSeries list, (details, callback) ->
+        name = details.name
+        container = docker.getContainer name
+        container.inspect (err, data) ->
+          if not data.State.Running
+            log "Starting container #{name}"
+            container.start callback
+          else
+            log "Container #{name} already running..."
+            callback null
+      , done
+
 
   stop: (container, done) ->
     throw new Error("Please supply a container to stop") if not container
@@ -206,3 +235,42 @@ class Decking
     return fn.call this, (err) -> throw err if err
 
 module.exports = Decking
+
+resolveOrder = (config, cluster, callback) ->
+  containerDetails = {}
+
+  for containerName in cluster
+    container = config.containers[containerName]
+    containerDetails[containerName] = container
+
+    for dependency in container.dependencies
+      [dep] = dependency.split ":"
+      if not containerDetails[dep]
+        containerDetails[dep] = config.containers[dep]
+
+
+  # at this point we have a full map of the containers involved in this
+  # cluster, albeit not necessarily in dependency order
+
+  deps = []
+  for name, details of containerDetails
+    for dep in details.dependencies
+      if deps.indexOf(dep) is -1
+        deps.push dep
+
+  orderedContainers = {}
+  for dep in deps
+    details = containerDetails[dep]
+    orderedContainers[dep] = details
+
+  for name, details of containerDetails
+    if not orderedContainers[name]
+      orderedContainers[name] = details
+
+
+  list = []
+  for name, details of orderedContainers
+    details.name = name
+    list.push details
+
+  callback list
