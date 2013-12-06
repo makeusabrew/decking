@@ -2,6 +2,7 @@ fs            = require "fs"
 child_process = require "child_process"
 async         = require "async"
 uuid          = require "node-uuid"
+DepTree       = require "deptree"
 
 Docker = require "dockerode"
 docker = new Docker
@@ -24,6 +25,7 @@ class Decking
 
       details.dependencies = [] if not details.dependencies
       details.aliases = []
+      details.name = name
       for dependency,i in details.dependencies
         [name, alias] = dependency.split ":"
         details.dependencies[i] = name
@@ -243,34 +245,15 @@ resolveOrder = (config, cluster, callback) ->
     container = config.containers[containerName]
     containerDetails[containerName] = container
 
+    # some dependencies might not be listed in the cluster but still need
+    # to be resolved
     for dependency in container.dependencies
-      [dep] = dependency.split ":"
-      if not containerDetails[dep]
-        containerDetails[dep] = config.containers[dep]
+      if not containerDetails[dependency]
+        containerDetails[dependency] = config.containers[dependency]
 
+  depTree = new DepTree
+  depTree.add name, details.dependencies for name, details of containerDetails
 
-  # at this point we have a full map of the containers involved in this
-  # cluster, albeit not necessarily in dependency order
-
-  deps = []
-  for name, details of containerDetails
-    for dep in details.dependencies
-      if deps.indexOf(dep) is -1
-        deps.push dep
-
-  orderedContainers = {}
-  for dep in deps
-    details = containerDetails[dep]
-    orderedContainers[dep] = details
-
-  for name, details of containerDetails
-    if not orderedContainers[name]
-      orderedContainers[name] = details
-
-
-  list = []
-  for name, details of orderedContainers
-    details.name = name
-    list.push details
+  list = (containerDetails[item] for item in depTree.resolve())
 
   callback list
