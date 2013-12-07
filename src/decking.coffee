@@ -70,71 +70,79 @@ class Decking
       @stop cluster, done
 
     status: (done) ->
-      child_process.exec "docker ps", (err, stdout, stderr) ->
-        process.stdout.write stdout
-        done()
+      [cluster] = @args
+      @status cluster, done
 
   start: (cluster, done) ->
-    throw new Error "Please supply a cluster to start" if not cluster
+    target = getCluster @config, cluster
 
-    target = @config.clusters[cluster]
-
-    throw new Error "Cluster #{cluster} does not exist in decking.json"  if not target
-
-    log "Resolving dependencies for cluster #{cluster}"
+    iterator = (details, callback) ->
+      name = details.name
+      container = docker.getContainer name
+      container.inspect (err, data) ->
+        if not data.State.Running
+          log "[#{name}] starting... "
+          container.start callback
+        else
+          log "[#{name}] already running... "
+          callback null
 
     resolveOrder @config, target, (list) ->
 
       validateContainerPresence list, (err) ->
         return done err if err
 
-        async.eachSeries list, (details, callback) ->
-          name = details.name
-          container = docker.getContainer name
-          container.inspect (err, data) ->
-            if not data.State.Running
-              log "Starting container #{name}"
-              container.start callback
-            else
-              log "Container #{name} already running..."
-              callback null
-        , done
+        async.eachSeries list, iterator, done
 
 
   stop: (cluster, done) ->
-    throw new Error "Please supply a cluster to stop" if not cluster
+    target = getCluster @config, cluster
 
-    target = @config.clusters[cluster]
-
-    throw new Error "Cluster #{cluster} does not exist in decking.json"  if not target
+    iterator = (details, callback) ->
+      name = details.name
+      container = docker.getContainer name
+      container.inspect (err, data) ->
+        if data.State.Running
+          log "[#{name}] stopping... "
+          container.stop callback
+        else
+          log "[#{name}] is not running..."
+          callback null
 
     resolveOrder @config, target, (list) ->
 
       validateContainerPresence list, (err) ->
         return done err if err
 
-        async.eachSeries list, (details, callback) ->
-          name = details.name
-          container = docker.getContainer name
-          container.inspect (err, data) ->
-            if data.State.Running
-              log "Stopping container #{name}"
-              container.stop callback
-            else
-              log "Container #{name} is not running..."
-              callback null
-        , done
+        async.eachSeries list, iterator, done
+
+  status: (cluster, done) ->
+    target = getCluster @config, cluster
+
+    iterator = (details, callback) ->
+      name = details.name
+      container = docker.getContainer name
+      container.inspect (err, data) ->
+        if err # @TODO inspect
+          log "[#{name}] does not yet exist"
+        else if data.State.Running
+          log "[#{name}] running" # @TODO more details
+        else
+          log "[#{name}] stopped"
+
+        callback null
+
+    # true, we don't care about the order of a cluster,
+    # but we *do* care about implicit containers, so we have to run this
+    # for now. Should split the methods out
+    resolveOrder @config, target, (list) -> async.eachLimit list, 5, iterator, done
 
   create: (cluster, done) ->
     # @TODO use the remote API when it supports -name and -link
     # @TODO check the target image exists locally, otherwise
     # `docker run` will try to download it. we want to take care
     # of dependency resolution ourselves
-    throw new Error "Please supply a cluster to create" if not cluster
-
-    target = @config.clusters[cluster]
-
-    throw new Error "Cluster #{cluster} does not exist in decking.json"  if not target
+    target = getCluster @config, cluster
 
     resolveOrder @config, target, (list) ->
       async.eachSeries list, (details, callback) ->
@@ -203,7 +211,9 @@ class Decking
   execute: (done) ->
     fn = @commands[@command]
 
-    throw new Error("Invalid arg") if typeof fn isnt "function"
+    throw new Error "Invalid argument" if typeof fn isnt "function"
+
+    log ""
 
     return fn.call this, (err) -> throw err if err
 
@@ -251,3 +261,12 @@ getRunArg = (key, val, object) ->
         arg = [].concat arg, ["-link #{v}:#{alias}"]
 
   return arg
+
+getCluster = (config, cluster) ->
+  throw new Error "Please supply a cluster name" if not cluster
+
+  target = config.clusters[cluster]
+
+  throw new Error "Cluster #{cluster} does not exist in decking.json"  if not target
+
+  return target
