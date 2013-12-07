@@ -53,8 +53,6 @@ Show the status of a cluster's containers
 * better method dependencies; e.g. cluster start should `create` missing containers
 * implement optional building of parent images when given a flag
 * cluster-level attach (e.g. a mutiplexed stream of `docker attach`)
-* better handling of env vars; allow some to be marked as not required, some to be interactive (e.g. prompt on create)
-* allow dependencies to just specify container name if alias is the same
 * allow container image to be omitted if other keys are present; fuzzy match on images object
 * tests!
 * allow shortcut if no explicit cluster specified, default to first key

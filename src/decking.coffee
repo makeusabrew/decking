@@ -25,11 +25,18 @@ class Decking
         details = config.containers[name] =
           image: details
 
+      details.name = name
+
       details.dependencies = [] if not details.dependencies
       details.aliases = []
-      details.name = name
+
       for dependency,i in details.dependencies
+        # it's nicer for rest of the app to work with dependencies and alises
+        # as separate arrays
         [name, alias] = dependency.split ":"
+
+        alias = name if not alias # if we didn't get dep:alias, assume dep:dep
+
         details.dependencies[i] = name
         details.aliases[i] = alias
 
