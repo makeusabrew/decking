@@ -62,15 +62,18 @@ the *local* Dockerfile relative to the project root. That's right; only local im
 can be built at the moment, although eventually you'll be able to specify tag names
 to build an image from the Docker Index instead.
 
-#### Example
-
 ```
 "images": {
   "makeusabrew/nodeflakes": "./docker/base",
   "makeusabrew/nodeflakes-server": "./docker/server",
   "makeusabrew/nodeflakes-consumer": "./docker/consumer",
   "makeusabrew/nodeflakes-processor": "./docker/processor"
-}```
+}
+```
+
+### containers (Object)
+
+Keys are the names you want to run your containers as (e.g. `docker run -name <key>`). Values are flexible. (@TODO).
 
 
 ## TODO
