@@ -144,38 +144,57 @@ class Decking
     # of dependency resolution ourselves
     target = getCluster @config, cluster
 
-    iterator = (details, callback) ->
-      name = details.name
+    commands = []
 
+    fetchIterator = (details, callback) ->
+      name = details.name
       container = docker.getContainer name
+
+      command =
+        name: name
+        container: container
+
       container.inspect (err, data) ->
         if not err
-          # already exists, BUT it might be a dependency so it needs starting
-          #log "Container #{name} already exists, skipping..."
-          # @TODO check if this container has dependents or not...
-          logAction name, "already exists - running in case of dependents"
-          return container.start callback
+          command.exists = true
+          commands.push command
+          return callback null
 
         cmdArgs = ["docker", "run", "-d", "-name", "#{name}"]
+        # @TODO allow getRunArg to prompt if necessary
         cmdArgs = [].concat cmdArgs, getRunArg key, val, details for key,val of details
         cmdArgs.push details.image
 
-        cmdString = cmdArgs.join " "
+        command.exec = cmdArgs.join " "
+        commands.push command
 
-        logAction name, "creating..."
+        callback null
 
-        child_process.exec cmdString, callback
+    createIterator = (command, callback) ->
+      name = command.name
+
+      if command.exists
+        # already exists, BUT it might be a dependency so it needs starting
+        #log "Container #{name} already exists, skipping..."
+        # @TODO check if this container has dependents or not...
+        logAction name, "already exists - running in case of dependents"
+        return command.container.start callback
+
+      logAction name, "creating..."
+
+      child_process.exec command.exec, callback
 
     stopIterator = (details, callback) ->
       container = docker.getContainer details.name
       container.stop callback
 
     resolveOrder @config, target, (list) ->
-      async.eachSeries list, iterator, ->
-        # @FIXME hack to avoid ghosts with quick start/stop combos
-        setTimeout ->
-          async.eachLimit list, 5, stopIterator, done
-        , 500
+      async.eachSeries list, fetchIterator, ->
+        async.eachSeries commands, createIterator, ->
+          # @FIXME hack to avoid ghosts with quick start/stop combos
+          setTimeout ->
+            async.eachLimit list, 5, stopIterator, done
+          , 500
 
   build: (image, done) ->
 
@@ -272,6 +291,10 @@ getRunArg = (key, val, object) ->
     when "env"
       for v,k in val
         [key, value] = v.split "="
+        # @TODO maybe:
+        # -  = required from env
+        # -? = optional from env
+        # -! = required from env, prompt if not supplied
         if value is "-" then value = process.env[key]
         arg = [].concat arg, ["-e", "#{key}=#{value}"]
 
