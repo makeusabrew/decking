@@ -3,6 +3,7 @@ child_process = require "child_process"
 async         = require "async"
 uuid          = require "node-uuid"
 DepTree       = require "deptree"
+read          = require "read"
 
 Docker = require "dockerode"
 docker = new Docker
@@ -160,15 +161,35 @@ class Decking
           commands.push command
           return callback null
 
+        # basic args we know we'll need
         cmdArgs = ["docker", "run", "-d", "-name", "#{name}"]
-        # @TODO allow getRunArg to prompt if necessary
-        cmdArgs = [].concat cmdArgs, getRunArg key, val, details for key,val of details
-        cmdArgs.push details.image
 
-        command.exec = cmdArgs.join " "
-        commands.push command
+        # this starts to get a bit messy; we have to loop over
+        # our container's options and using a closure bind a
+        # function to run against each key/val - a function which
+        # can potentially be asynchronous
+        # we bung all these closures in an array which we *then*
+        # pass to async. can't just use async.each here as that
+        # only works on arrays
+        run = []
+        for key,val of details
+          # don't need to bind 'details', it doesn't change
+          do (key, val) ->
+            # run is going to be fed into async.series, it expects
+            # to only fire a callback per iteration...
+            run.push (done) -> getRunArg key, val, details, done
 
-        callback null
+        # now we've got our array of getRunArg calls bound to the right
+        # variables, run them in order and add the results to the initial
+        # run command
+        async.series run, (err, results) ->
+          cmdArgs = cmdArgs.concat result for result in results
+          cmdArgs.push details.image
+
+          command.exec = cmdArgs.join " "
+          commands.push command
+
+          callback null
 
     createIterator = (command, callback) ->
       name = command.name
@@ -247,7 +268,7 @@ maxNameLength = 0
 logAction = (name, message) ->
   pad = (maxNameLength + 1) - name.length
 
-  log "[#{name}]#{Array(pad).join(" ")} #{message}"
+  log "#{name}#{Array(pad).join(" ")}  #{message}"
 
 resolveOrder = (config, cluster, callback) ->
   containerDetails = {}
@@ -280,34 +301,50 @@ validateContainerPresence = (list, done) ->
 
   async.eachSeries list, iterator, done
 
-getRunArg = (key, val, object) ->
+getRunArg = (key, val, object, done) ->
   arg = []
 
   switch key
-    when "port"
-      for v in val
-        arg = [].concat arg, ["-p #{v}"]
-
     when "env"
-      for v,k in val
+      # we need to loop through all the entries asynchronously
+      # because if we get an ENV_VAR=- format (the key being -) then
+      # we'll prompt for the value
+      iterator = (v, callback) ->
         [key, value] = v.split "="
-        # @TODO maybe:
-        # -  = required from env
-        # -? = optional from env
-        # -! = required from env, prompt if not supplied
+
+        # first thing's first, try and substitute a real process.env value
         if value is "-" then value = process.env[key]
-        arg = [].concat arg, ["-e", "#{key}=#{value}"]
+
+        # did we have one? great! bail early with the updated value
+        if value
+          arg = [].concat arg, ["-e #{key}=#{value}"]
+          return callback null
+
+        # if we got here we still don't have a value for this env var, so
+        # we need to ask the user for it
+        options =
+          prompt: "#{object.name} requires a value for the env var '#{key}':"
+
+        read options, (err, value) ->
+          arg = [].concat arg, ["-e #{key}=#{value}"]
+          return callback null
+
+      return async.eachSeries val, iterator, (err) -> done err, arg
 
     when "dependencies"
       for v,k in val
+        # we trust that the aliases array has the correct matching
+        # indices here such that alias[k] is the correct alias for dependencies[k]
         alias = object.aliases[k]
         arg = [].concat arg, ["-link #{v}:#{alias}"]
 
-    when "mount"
-      for v in val
-        arg = [].concat arg, ["-v #{v}"]
+    when "port"
+      arg = [].concat arg, ["-p #{v}"] for v in val
 
-  return arg
+    when "mount"
+      arg = [].concat arg, ["-v #{v}"] for v in val
+
+  return done null, arg
 
 getCluster = (config, cluster) ->
   throw new Error "Please supply a cluster name" if not cluster

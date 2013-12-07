@@ -19,6 +19,7 @@
     "dockerode": "~0.2.2",
     "async": "~0.2.9",
     "node-uuid": "~1.4.1",
-    "deptree": "~0.1.0"
+    "deptree": "~0.1.0",
+    "read": "~1.0.5"
   }
 }
