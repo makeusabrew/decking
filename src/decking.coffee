@@ -61,6 +61,7 @@ class Decking
         start   start a cluster of containers
         stop    stop a cluster
         status  check the status of a cluster's containers
+        attach  attach to all running containers in a cluster
       """
 
       log help
@@ -84,6 +85,7 @@ class Decking
     start: (done) -> @_run "start", done
     stop: (done) -> @_run "stop", done
     status: (done) -> @_run "status", done
+    attach: (done) -> @_run "attach", done
 
   _run: (cmd, done) ->
     [cluster] = @args
@@ -123,6 +125,31 @@ class Decking
         else
           logAction name, "skipping (already stopped)"
           callback null
+
+    resolveOrder @config, cluster, (list) ->
+
+      validateContainerPresence list, (err) ->
+        return done err if err
+
+        async.eachSeries list, iterator, done
+
+  attach: (cluster, done) ->
+
+    options =
+      stream: true
+      stdout: true
+      stderr: true
+      tty: false
+
+    iterator = (details, callback) ->
+      name = details.name
+      container = docker.getContainer name
+      container.attach options, (err, stream) ->
+        # woah! the stream data is a bit complex. ideally i want to pipe
+        # each container's logs to a different writable stream, not process.stdout
+        container.modem.demuxStream stream, process.stdout, process.stderr
+
+        callback null
 
     resolveOrder @config, cluster, (list) ->
 
