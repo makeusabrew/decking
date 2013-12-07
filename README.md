@@ -55,5 +55,4 @@ Show the status of a cluster's containers
 * cluster-level attach (e.g. a mutiplexed stream of `docker attach`)
 * allow container image to be omitted if other keys are present; fuzzy match on images object
 * tests!
-* allow shortcut if no explicit cluster specified, default to first key
 * rework all output to always show full container list and update as necessary

@@ -62,27 +62,18 @@ class Decking
       else
         @build image, done
 
-    create: (done) ->
-      # create a container based on metadata
-      # for now due to remote API limitations this
-      # is going to be a `run` followed quickly by a `stop`
-      [cluster] = @args
-      @create cluster, done
+    create: (done) -> @_run "create", done
+    start: (done) -> @_run "start", done
+    stop: (done) -> @_run "stop", done
+    status: (done) -> @_run "status", done
 
-    start: (done) ->
-      [cluster] = @args
-      @start cluster, done
-
-    stop: (done) ->
-      [cluster] = @args
-      @stop cluster, done
-
-    status: (done) ->
-      [cluster] = @args
-      @status cluster, done
+  _run: (cmd, done) ->
+    [cluster] = @args
+    target = getCluster @config, cluster
+    log ""
+    this[cmd](target, done)
 
   start: (cluster, done) ->
-    target = getCluster @config, cluster
 
     iterator = (details, callback) ->
       name = details.name
@@ -95,7 +86,7 @@ class Decking
           logAction name, "skipping (already running)"
           callback null
 
-    resolveOrder @config, target, (list) ->
+    resolveOrder @config, cluster, (list) ->
 
       validateContainerPresence list, (err) ->
         return done err if err
@@ -104,7 +95,6 @@ class Decking
 
 
   stop: (cluster, done) ->
-    target = getCluster @config, cluster
 
     iterator = (details, callback) ->
       name = details.name
@@ -117,7 +107,7 @@ class Decking
           logAction name, "skipping (already stopped)"
           callback null
 
-    resolveOrder @config, target, (list) ->
+    resolveOrder @config, cluster, (list) ->
 
       validateContainerPresence list, (err) ->
         return done err if err
@@ -125,7 +115,6 @@ class Decking
         async.eachSeries list, iterator, done
 
   status: (cluster, done) ->
-    target = getCluster @config, cluster
 
     iterator = (details, callback) ->
       name = details.name
@@ -143,14 +132,16 @@ class Decking
     # true, we don't care about the order of a cluster,
     # but we *do* care about implicit containers, so we have to run this
     # for now. Should split the methods out
-    resolveOrder @config, target, (list) -> async.eachLimit list, 5, iterator, done
+    resolveOrder @config, cluster, (list) -> async.eachLimit list, 5, iterator, done
 
   create: (cluster, done) ->
+    # create a container based on metadata
+    # for now due to remote API limitations this
+    # is going to be a `run` followed quickly by a `stop`
     # @TODO use the remote API when it supports -name and -link
     # @TODO check the target image exists locally, otherwise
     # `docker run` will try to download it. we want to take care
     # of dependency resolution ourselves
-    target = getCluster @config, cluster
 
     commands = []
 
@@ -216,7 +207,7 @@ class Decking
       container = docker.getContainer details.name
       container.stop callback
 
-    resolveOrder @config, target, (list) ->
+    resolveOrder @config, cluster, (list) ->
       async.eachSeries list, fetchIterator, ->
         async.eachSeries commands, createIterator, ->
           # @FIXME hack to avoid ghosts with quick start/stop combos
@@ -266,8 +257,6 @@ class Decking
     fn = @commands[@command]
 
     throw new Error "Invalid argument" if typeof fn isnt "function"
-
-    log ""
 
     return fn.call this, (err) -> throw err if err
 
@@ -354,7 +343,12 @@ getRunArg = (key, val, object, done) ->
   return done null, arg
 
 getCluster = (config, cluster) ->
-  throw new Error "Please supply a cluster name" if not cluster
+  if not cluster
+    throw new Error "Please supply a cluster name" if Object.keys(config.clusters).length isnt 1
+
+    # no cluster specified, but there's only one, so just default to it
+    cluster = key for key of config.clusters
+    log "Defaulting to cluster '#{cluster}'"
 
   target = config.clusters[cluster]
 
