@@ -150,8 +150,10 @@ class Decking
       container = docker.getContainer name
       container.inspect (err, data) ->
         if not err
-          log "Container #{name} already exists, skipping..."
-          return callback null
+          # already exists, BUT it might be a dependency so it needs starting
+          #log "Container #{name} already exists, skipping..."
+          # @TODO check if this container has dependents or not...
+          return container.start callback
 
         cmdArgs = ["docker", "run", "-d", "-name", "#{name}"]
         cmdArgs = [].concat cmdArgs, getRunArg key, val, details for key,val of details
@@ -159,15 +161,20 @@ class Decking
 
         cmdString = cmdArgs.join " "
 
-        log "Running container with args #{cmdString}"
+        log "Creating container with args #{cmdString}"
 
-        child_process.exec cmdString, (err) ->
-          return callback err if err
-          setTimeout ->
-            child_process.exec "docker stop #{name}", callback
-          , 500
+        child_process.exec cmdString, callback
 
-    resolveOrder @config, target, (list) -> async.eachSeries list, iterator, done
+    stopIterator = (details, callback) ->
+      container = docker.getContainer details.name
+      container.stop callback
+
+    resolveOrder @config, target, (list) ->
+      async.eachSeries list, iterator, ->
+        # @FIXME hack to avoid ghosts with quick start/stop combos
+        setTimeout ->
+          async.eachLimit list, 5, stopIterator, done
+        , 500
 
   build: (image, done) ->
 
