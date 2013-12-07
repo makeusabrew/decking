@@ -2,8 +2,6 @@
 
 ## Project goals
 
-(Update 2nd December 2013: these have changed somewhat!)
-
 To simplify the creation, management and running of clusters
 of Docker containers in a way which is familiar to developers;
 by reading container information from a `decking.json` package file
@@ -17,7 +15,10 @@ for a *very* rough example!
 
 ## Installation
 
-Don't yet - decking is too unstable at the moment.
+Not advised yet - decking is too unstable at the moment. If you want to get stuck in
+then just clone the repository and run `./bin/decking` - it'll display the most up-to-date
+list of commands (which might not be the same as those listed below). You'll need CoffeeScript
+until the module is properly published on npm.
 
 ## Methods
 
@@ -47,14 +48,40 @@ Stop a running cluster
 
 Show the status of a cluster's containers
 
+### attach (cluster)
+
+Attach to all running containers in the cluster. Needs a lot of work to
+identify which container the output stream is coming from.
+
+## decking.json
+
+### images (Object)
+
+Each key is the name of the image you want to build. Each value is the location of
+the *local* Dockerfile relative to the project root. That's right; only local images
+can be built at the moment, although eventually you'll be able to specify tag names
+to build an image from the Docker Index instead.
+
+#### Example
+
+```
+"images": {
+  "makeusabrew/nodeflakes": "./docker/base",
+  "makeusabrew/nodeflakes-server": "./docker/server",
+  "makeusabrew/nodeflakes-consumer": "./docker/consumer",
+  "makeusabrew/nodeflakes-processor": "./docker/processor"
+}```
+
+
 ## TODO
 
 * proper error checking - so many cases not handled at all, let alone gracefully
 * better method dependencies; e.g. cluster start should `create` missing containers
 * implement optional building of parent images when given a flag
-* cluster-level attach (e.g. a mutiplexed stream of `docker attach`)
 * allow container image to be omitted if other keys are present; fuzzy match on images object
 * tests!
-* rework all output to always show full container list and update as necessary
+* rework all output to always show full container list and update lines as necessary
 * provide options to exclude 'implicit' cluster deps on start/stop/create
 * add 'destroy' method - with appropriate warnings
+* introduce concept of groups - allowing base container definitions to be merged with a group
+  which can be run with different group-level params
