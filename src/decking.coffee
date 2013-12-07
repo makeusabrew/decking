@@ -84,7 +84,7 @@ class Decking
           logAction name, "starting..."
           container.start callback
         else
-          logAction name, "already running..."
+          logAction name, "skipping (already running)"
           callback null
 
     resolveOrder @config, target, (list) ->
@@ -106,7 +106,7 @@ class Decking
           logAction name, "stopping..."
           container.stop callback
         else
-          logAction name, "is not running..."
+          logAction name, "skipping (already stopped)"
           callback null
 
     resolveOrder @config, target, (list) ->
@@ -153,6 +153,7 @@ class Decking
           # already exists, BUT it might be a dependency so it needs starting
           #log "Container #{name} already exists, skipping..."
           # @TODO check if this container has dependents or not...
+          logAction name, "already exists - running in case of dependents"
           return container.start callback
 
         cmdArgs = ["docker", "run", "-d", "-name", "#{name}"]
@@ -161,7 +162,7 @@ class Decking
 
         cmdString = cmdArgs.join " "
 
-        log "Creating container with args #{cmdString}"
+        logAction name, "creating..."
 
         child_process.exec cmdString, callback
 
