@@ -21,9 +21,6 @@ Don't yet - decking is too unstable at the moment.
 
 ## Methods
 
-None of the below are fully implemented yet, but they're the rough
-roadmap for the short term future.
-
 ### build (image | all)
 
 Alleviate the inconvenience of ADD requiring a local (./ downwards)
@@ -31,7 +28,7 @@ context.
 
 Rebuild all parent images, or up to a level specified (e.g. --parents=1)
 
-### create (container)
+### create (cluster)
 
 Take run args from package file if supplied in expected format.
 
@@ -46,10 +43,9 @@ Start a cluster (must call `create` first - for now)
 
 Stop a running cluster
 
-### status
+### status (cluster)
 
-Simple shortcut for `docker ps`. Should actually give you the status of
-a particular cluster.
+Show the status of a cluster's containers
 
 ## TODO
 
@@ -58,7 +54,7 @@ a particular cluster.
 * implement optional building of parent images when given a flag
 * cluster-level attach (e.g. a mutiplexed stream of `docker attach`)
 * better handling of env vars; allow some to be marked as not required, some to be interactive (e.g. prompt on create)
-* allow `cluster status [name]` to just filter relevant containers' statuses
 * allow dependencies to just specify container name if alias is the same
 * allow container image to be omitted if other keys are present; fuzzy match on images object
 * tests!
+* allow shortcut if no explicit cluster specified, default to first key

@@ -81,10 +81,10 @@ class Decking
       container = docker.getContainer name
       container.inspect (err, data) ->
         if not data.State.Running
-          log "[#{name}] starting... "
+          logAction name, "starting..."
           container.start callback
         else
-          log "[#{name}] already running... "
+          logAction name, "already running..."
           callback null
 
     resolveOrder @config, target, (list) ->
@@ -103,10 +103,10 @@ class Decking
       container = docker.getContainer name
       container.inspect (err, data) ->
         if data.State.Running
-          log "[#{name}] stopping... "
+          logAction name, "stopping..."
           container.stop callback
         else
-          log "[#{name}] is not running..."
+          logAction name, "is not running..."
           callback null
 
     resolveOrder @config, target, (list) ->
@@ -124,11 +124,11 @@ class Decking
       container = docker.getContainer name
       container.inspect (err, data) ->
         if err # @TODO inspect
-          log "[#{name}] does not yet exist"
+          logAction name, "does not exist"
         else if data.State.Running
-          log "[#{name}] running" # @TODO more details
+          logAction name, "running" # @TODO more details
         else
-          log "[#{name}] stopped"
+          logAction name, "stopped"
 
         callback null
 
@@ -223,6 +223,12 @@ class Decking
 
     return fn.call this, (err) -> throw err if err
 
+maxNameLength = 0
+logAction = (name, message) ->
+  pad = (maxNameLength + 1) - name.length
+
+  log "[#{name}]#{Array(pad).join(" ")} #{message}"
+
 resolveOrder = (config, cluster, callback) ->
   containerDetails = {}
 
@@ -237,7 +243,10 @@ resolveOrder = (config, cluster, callback) ->
         containerDetails[dependency] = config.containers[dependency]
 
   depTree = new DepTree
-  depTree.add name, details.dependencies for name, details of containerDetails
+  for name, details of containerDetails
+    depTree.add name, details.dependencies
+    # @NOTE while we're here, work out the longest name in the cluster (dirty)
+    maxNameLength = name.length if name.length > maxNameLength
 
   list = (containerDetails[item] for item in depTree.resolve())
 
