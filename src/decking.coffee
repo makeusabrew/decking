@@ -144,31 +144,30 @@ class Decking
     # of dependency resolution ourselves
     target = getCluster @config, cluster
 
-    resolveOrder @config, target, (list) ->
-      async.eachSeries list, (details, callback) ->
+    iterator = (details, callback) ->
+      name = details.name
 
-        name = details.name
+      container = docker.getContainer name
+      container.inspect (err, data) ->
+        if not err
+          log "Container #{name} already exists, skipping..."
+          return callback null
 
-        container = docker.getContainer name
-        container.inspect (err, data) ->
-          if not err
-            log "Container #{name} already exists, skipping..."
-            return callback null
+        cmdArgs = ["docker", "run", "-d", "-name", "#{name}"]
+        cmdArgs = [].concat cmdArgs, getRunArg key, val, details for key,val of details
+        cmdArgs.push details.image
 
-          cmdArgs = ["docker", "run", "-d", "-name", "#{name}"]
-          cmdArgs = [].concat cmdArgs, getRunArg key, val, details for key,val of details
-          cmdArgs.push details.image
+        cmdString = cmdArgs.join " "
 
-          cmdString = cmdArgs.join " "
+        log "Running container with args #{cmdString}"
 
-          log "Running container with args #{cmdString}"
+        child_process.exec cmdString, (err) ->
+          return callback err if err
+          setTimeout ->
+            child_process.exec "docker stop #{name}", callback
+          , 500
 
-          child_process.exec cmdString, (err) ->
-            return callback err if err
-            setTimeout ->
-              child_process.exec "docker stop #{name}", callback
-            , 500
-      , done
+    resolveOrder @config, target, (list) -> async.eachSeries list, iterator, done
 
   build: (image, done) ->
 
@@ -247,18 +246,26 @@ validateContainerPresence = (list, done) ->
 
 getRunArg = (key, val, object) ->
   arg = []
+
   switch key
     when "port"
-      arg = ["-p", "#{val[0]}"]
+      for v in val
+        arg = [].concat arg, ["-p #{v}"]
+
     when "env"
-      for k,v of val
+      for v,k in val
         [key, value] = v.split "="
         if value is "-" then value = process.env[key]
         arg = [].concat arg, ["-e", "#{key}=#{value}"]
+
     when "dependencies"
       for v,k in val
         alias = object.aliases[k]
         arg = [].concat arg, ["-link #{v}:#{alias}"]
+
+    when "mount"
+      for v in val
+        arg = [].concat arg, ["-v #{v}"]
 
   return arg
 
