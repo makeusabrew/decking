@@ -45,10 +45,28 @@ class Decking
   parseConfig: (data) -> JSON.parse data
 
   loadConfig: (file) ->
-    log "Loading package file..."
+    #log "Loading package file..."
     @processConfig @parseConfig fs.readFileSync file
 
   commands:
+    help: (done) ->
+      log ""
+      help =
+      """
+      Usage: decking COMMAND [arg...]
+
+      Commands:
+        build   build an image or pass 'all' to build all
+        create  create a cluster
+        start   start a cluster of containers
+        stop    stop a cluster
+        status  check the status of a cluster's containers
+      """
+
+      log help
+
+      done null
+
     build: (done) ->
       [image] = @args
 
@@ -70,7 +88,6 @@ class Decking
   _run: (cmd, done) ->
     [cluster] = @args
     target = getCluster @config, cluster
-    log ""
     this[cmd](target, done)
 
   start: (cluster, done) ->
@@ -254,6 +271,7 @@ class Decking
 
 
   execute: (done) ->
+    @command = "help" if not @command or @command is "-h" or @command is "--help"
     fn = @commands[@command]
 
     throw new Error "Invalid argument" if typeof fn isnt "function"
@@ -348,7 +366,7 @@ getCluster = (config, cluster) ->
 
     # no cluster specified, but there's only one, so just default to it
     cluster = key for key of config.clusters
-    log "Defaulting to cluster '#{cluster}'"
+    log "Defaulting to cluster '#{cluster}'\n"
 
   target = config.clusters[cluster]
 

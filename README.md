@@ -56,3 +56,5 @@ Show the status of a cluster's containers
 * allow container image to be omitted if other keys are present; fuzzy match on images object
 * tests!
 * rework all output to always show full container list and update as necessary
+* provide options to exclude 'implicit' cluster deps on start/stop/create
+* add 'destroy' method - with appropriate warnings
