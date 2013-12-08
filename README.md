@@ -73,8 +73,32 @@ to build an image from the Docker Index instead.
 
 ### containers (Object)
 
-Keys are the names you want to run your containers as (e.g. `docker run -name <key>`). Values are flexible. (@TODO).
+Keys are the names you want to run your containers as (e.g. `docker run -name <key>`). Values are either a string in which case they must refer to a valid `images` key or an object. A definition of two containers might look a bit like this:
 
+```
+"containers": {
+  "container_name": {
+    "image": "makeusabrew/nodeflakes-processor",  // must exist in images object
+    "port" : ["1234:1234"],
+    "env": : ["MY_ENV_VAR=value", "ANOTHER_VAR=-"]
+    "dependencies": [
+      "another_container:alias_name"
+    ],
+    "mount": ["host_dir:container_dir"]
+  },
+  "another_container": "makeusabrew/nodeflakes-consumer"
+}
+```
+
+Each key in the definition of `container_name` maps loosely onto an argument which will be passed to `docker run`:
+
+* port -> `-p`
+* env -> `-e`
+* dependencies -> `-link`
+* mount -> `-v`
+* image -> supplied verbatim as the last part of the run command
+
+It might be simpler to remove this abstraction and just name them exactly as per the arguments as per those passed to docker run, but you'd end up with some pretty ugly looking definitions full of single letter keys. Still, this may change.
 
 ## TODO
 
