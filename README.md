@@ -5,15 +5,20 @@ of Docker containers in a way which is familiar to developers;
 by reading information from a `decking.json` package file
 on a project by project basis.
 
-It intends to use the Docker Remote API wherever possible (not everywhere, does
-not appear to support -name and -link flags yet).
+It simplifies the building of images based on local Dockerfiles which can ordinarily be a time-consuming and error prone process (building the wrong Dockerfile as the wrong image, and having to move the Dockerfile to the root of a project in order to make the `ADD` directive work properly).
 
-See [nodeflakes/decking.json](https://github.com/makeusabrew/nodeflakes/blob/master/decking.json)
-for a *very* rough example!
+It simplifies the creation of containers by considering `docker run` parameters to be part of the definition of each
+container - again meaning less room for error as each developer doesn't have to remember the correct run time parameters to use when creating each container.
+
+It simplifies the running of containers by allowing dependencies to be specified, ensuring that all containers forming
+part of a cluster are started in the correct order such that `-link` parameters work as expected. Entire clusters of containers can be started, stopped or attached to with a single command, without having to worry about restarting them in dependency order.
+
+It intends to use the Docker Remote API wherever possible (not everywhere, does
+not appear to support `-name` and `-link` flags yet).
 
 ## Installation
 
-Not advised yet - decking is *very* rough around the edges at the moment. If you want to get stuck in
+Be warned: decking is *very* rough around the edges at the moment. If you want to get stuck in
 then just clone the repository and run `./bin/decking` - it'll display the most up-to-date
 list of commands (which might not be the same as those listed below). You'll need CoffeeScript
 to run the executable. Alternatively, you can install the latest version published on npm:
