@@ -93,7 +93,7 @@ Each key in the definition of `nfprocessor` maps loosely onto an argument which 
 * mount -> `-v`
 * image -> supplied as-is as the last part of the run command
 
-It might be simpler to remove this abstraction and just name these keys exactly as per the arguments as per those passed to docker run, but you'd end up with some pretty ugly looking definitions full of single letter keys. Nevertheless, this *may* change.
+It might be simpler to remove this abstraction and just name these keys exactly as per the arguments passed to docker run, but you'd end up with some pretty ugly looking definitions full of single letter keys. Nevertheless, this *may* change.
 
 Notice that our env var `ANOTHER_VAR` is defined simply as `-`. This is a special value which, when the container is first created, will be substituted with the current value of `process.env['ANOTHER_VAR']`. If that yields a falsy value the user will be prompted for it. **Please note** that you will only be prompted for any missing environment variables *once* when calling `decking create <cluster>`. Of course, if you manually `docker rm` a container used in the cluster and then call `decking create <cluster>` again you will be prompted for the value once more.
 
