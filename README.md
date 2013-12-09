@@ -16,6 +16,8 @@ part of a cluster are started in the correct order such that `-link` parameters 
 It intends to use the Docker Remote API wherever possible (not everywhere, does
 not appear to support `-name` and `-link` flags yet).
 
+Please view [this showterm recording](http://showterm.io/21bc0f5d5ddbe4a1c4f2a) of decking in action as used by [makeusabrew/nodeflakes](https://github.com/makeusabrew/nodeflakes) (check out its [decking.json](https://github.com/makeusabrew/nodeflakes/blob/master/decking.json) definition for full details).
+
 ## Installation
 
 Be warned: decking is *very* rough around the edges at the moment. If you want to get stuck in
