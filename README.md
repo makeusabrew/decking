@@ -62,16 +62,59 @@ the *local* Dockerfile relative to the project root. That's right; only local im
 can be built at the moment, although eventually you'll be able to specify tag names
 to build an image from the Docker Index instead.
 
-#### Example
-
 ```
 "images": {
   "makeusabrew/nodeflakes": "./docker/base",
   "makeusabrew/nodeflakes-server": "./docker/server",
   "makeusabrew/nodeflakes-consumer": "./docker/consumer",
   "makeusabrew/nodeflakes-processor": "./docker/processor"
-}```
+}
+```
 
+### containers (Object)
+
+Keys are the names you want to run your containers as (e.g. `docker run -name <key>`). Values are either a string - in which case they must refer to a valid `images` key - or an object. A definition of two containers might look a bit like this:
+
+```
+"containers": {
+  "container_name": {
+    "image": "makeusabrew/nodeflakes-processor",  // must exist in images object
+    "port" : ["1234:1234"],
+    "env": : ["MY_ENV_VAR=value", "ANOTHER_VAR=-"]
+    "dependencies": [
+      "another_container:alias_name"
+    ],
+    "mount": ["host_dir:container_dir"]
+  },
+  "another_container": "makeusabrew/nodeflakes-consumer"
+}
+```
+
+Each key in the definition of `container_name` maps loosely onto an argument which will be passed to `docker run`:
+
+* port -> `-p`
+* env -> `-e`
+* dependencies -> `-link`
+* mount -> `-v`
+* image -> supplied verbatim as the last part of the run command
+
+It might be simpler to remove this abstraction and just name them exactly as per the arguments as per those passed to docker run, but you'd end up with some pretty ugly looking definitions full of single letter keys. Still, this may change.
+
+Notice that our env var `ANOTHER_VAR` is defined simply as `-`. This is a special value which, when the container is first created, will be substituted with the current value of `process.env['ANOTHER_VAR']`. If that yields a falsy value the user will be prompted for it.
+
+### clusters (Object)
+
+Keys are the names of clusters you want to refer to, values are just arrays of keys found in the `containers` object. These definitions are simple as most of the configuration has already been done:
+
+```
+"clusters": {
+  "main": ["another_container", "container_name"]
+}
+```
+
+Note that the order we list our containers as part of each cluster definition doesn't matter - decking will resolve the dependencies based on each container's definition and make sure they start in the correct order.
+
+See [nodeflakes/decking.json](https://github.com/makeusabrew/nodeflakes/blob/master/decking.json) for a working - albeit rather simple - decking.json file.
 
 ## TODO
 
