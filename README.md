@@ -1,13 +1,11 @@
 # decking
 
-## Project goals
-
-To simplify the creation, management and running of clusters
+Decking aims to simplify the creation, management and running of clusters
 of Docker containers in a way which is familiar to developers;
-by reading container information from a `decking.json` package file
+by reading information from a `decking.json` package file
 on a project by project basis.
 
-To use the Docker Remote API wherever possible (not everywhere, does
+It intends to use the Docker Remote API wherever possible (not everywhere, does
 not appear to support -name and -link flags yet).
 
 See [nodeflakes/decking.json](https://github.com/makeusabrew/nodeflakes/blob/master/decking.json)
@@ -15,45 +13,33 @@ for a *very* rough example!
 
 ## Installation
 
-Not advised yet - decking is too unstable at the moment. If you want to get stuck in
+Not advised yet - decking is *very* rough around the edges at the moment. If you want to get stuck in
 then just clone the repository and run `./bin/decking` - it'll display the most up-to-date
 list of commands (which might not be the same as those listed below). You'll need CoffeeScript
-until the module is properly published on npm.
+to run the executable. Alternatively, you can install the latest version published on npm:
+
+```sudo npm install -g decking```
+
+Note that the 0.0.x releases on npm are likely to be pretty unstable!
 
 ## Methods
 
-### build (image | all)
+**build (image | all)** - alleviate the inconvenience of ADD requiring a local (./ downwards)
+context. (TODO: Rebuild all parent images, or up to a level specified (e.g. --parents=1))
 
-Alleviate the inconvenience of ADD requiring a local (./ downwards)
-context.
+**create (cluster)** - create a cluster of containers based on parameters found in the decking.json file. Dependencies can be specified which will ensure containers used as `-link` parameters exist before creation of their dependents.
 
-Rebuild all parent images, or up to a level specified (e.g. --parents=1)
 
-### create (cluster)
+**start (cluster)** - start a cluster (must call `create` first - for now). Dependencies are started first so `-link`s work properly
 
-Take run args from package file if supplied in expected format.
+**stop (cluster)** - stop a cluster
 
-Allow dependencies to be specified, e.g. containers used as links
-will be created first such that they can be linked properly
+**status (cluster)** - show the status of each container in a cluster (started / stopped / non-existent)
 
-### start (cluster)
 
-Start a cluster (must call `create` first - for now)
+**attach (cluster)** - multiplex the output from all running containers in a cluster into one stdout / stderr stream
 
-### stop (cluster)
-
-Stop a running cluster
-
-### status (cluster)
-
-Show the status of a cluster's containers
-
-### attach (cluster)
-
-Attach to all running containers in the cluster. Needs a lot of work to
-identify which container the output stream is coming from.
-
-## decking.json
+## decking.json format
 
 ### images (Object)
 
