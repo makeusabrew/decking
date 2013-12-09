@@ -4,13 +4,12 @@ async         = require "async"
 uuid          = require "node-uuid"
 DepTree       = require "deptree"
 read          = require "read"
+Docker        = require "dockerode"
+DuplexStream  = require "./duplex_stream"
 
-Docker = require "dockerode"
-docker = new Docker
-  socketPath: "/var/run/docker.sock"
-
+docker = new Docker socketPath: "/var/run/docker.sock"
 logger = process.stdout
-log = (data) -> logger.write "#{data}\n"
+log    = (data) -> logger.write "#{data}\n"
 
 module.exports =
 class Decking
@@ -147,7 +146,7 @@ class Decking
       container.attach options, (err, stream) ->
         # woah! the stream data is a bit complex. ideally i want to pipe
         # each container's logs to a different writable stream, not process.stdout
-        container.modem.demuxStream stream, process.stdout, process.stderr
+        new DuplexStream container, stream, padName(name, "(", ")")
 
         callback null
 
@@ -306,10 +305,14 @@ class Decking
     return fn.call this, (err) -> throw err if err
 
 maxNameLength = 0
-logAction = (name, message) ->
-  pad = (maxNameLength + 1) - name.length
 
-  log "#{name}#{Array(pad).join(" ")}  #{message}"
+padName = (name, prefix = "", suffix = "") ->
+  pad = (maxNameLength + 1) - name.length
+  return "#{prefix}#{name}#{suffix}#{Array(pad).join(" ")}"
+
+logAction = (name, message) ->
+
+  log "#{padName(name)}  #{message}"
 
 resolveOrder = (config, cluster, callback) ->
   containerDetails = {}
