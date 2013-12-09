@@ -369,6 +369,8 @@ getRunArg = (key, val, object, done) ->
         # we need to ask the user for it
         options =
           prompt: "#{object.name} requires a value for the env var '#{key}':"
+          silent: true
+          replace: "*"
 
         read options, (err, value) ->
           arg = [].concat arg, ["-e #{key}=#{value}"]
