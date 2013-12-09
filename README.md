@@ -16,6 +16,8 @@ part of a cluster are started in the correct order such that `-link` parameters 
 It intends to use the Docker Remote API wherever possible (not everywhere, does
 not appear to support `-name` and `-link` flags yet).
 
+Please view [this showterm recording](http://showterm.io/21bc0f5d5ddbe4a1c4f2a) of decking in action as used by [makeusabrew/nodeflakes](https://github.com/makeusabrew/nodeflakes) (check out its [decking.json](https://github.com/makeusabrew/nodeflakes/blob/master/decking.json) definition for full details).
+
 ## Installation
 
 Be warned: decking is *very* rough around the edges at the moment. If you want to get stuck in
@@ -30,7 +32,7 @@ Note that the 0.0.x releases on npm are likely to be pretty unstable!
 ## Methods
 
 **build (image | all)** - alleviate the inconvenience of ADD requiring a local (./ downwards)
-context. (TODO: Rebuild all parent images, or up to a level specified (e.g. --parents=1))
+context and ensure error-free mapping of Dockerfiles to image names.
 
 **create (cluster)** - create a cluster of containers based on parameters found in the decking.json file. Dependencies can be specified which will ensure containers used as `-link` parameters exist before creation of their dependents.
 
@@ -43,6 +45,8 @@ context. (TODO: Rebuild all parent images, or up to a level specified (e.g. --pa
 
 
 **attach (cluster)** - multiplex the output from all running containers in a cluster into one stdout / stderr stream
+
+If you only have one cluster definition in your decking.json file (see below) then `<cluster>` may be omitted, meaning in practice you can usually simply type `decking start`, `decking stop` etc.
 
 ## decking.json format
 
@@ -62,36 +66,38 @@ to build an image from the Docker Index instead.
 }
 ```
 
+When building an image the relevant Dockerfile will be copied to the root of your project (i.e. to the same level as your decking.json file) such that any `ADD` directives will be relative to your project root (which in my experience, or at least how I use Dockerfiles, is always the desired behaviour).
+
 ### containers (Object)
 
-Keys are the names you want to run your containers as (e.g. `docker run -name <key>`). Values are either a string - in which case they must refer to a valid `images` key - or an object. A definition of two containers might look a bit like this:
+Keys are the names you want to run your images as (e.g. `docker run -name <key> ...`). Values are either a string - in which case they must refer to a valid `images` key - or an object. A definition of two containers demonstrating both approaches might look a bit like this:
 
 ```
 "containers": {
-  "container_name": {
+  "nfprocessor": {
     "image": "makeusabrew/nodeflakes-processor",  // must exist in images object
     "port" : ["1234:1234"],
     "env": : ["MY_ENV_VAR=value", "ANOTHER_VAR=-"]
     "dependencies": [
-      "another_container:alias_name"
+      "nfconsumer:consumer"
     ],
-    "mount": ["host_dir:container_dir"]
+    "mount": ["/path/to/host-dir:/path/to/container-dir"]
   },
-  "another_container": "makeusabrew/nodeflakes-consumer"
+  "nfconsumer": "makeusabrew/nodeflakes-consumer"  // shorthand, this container requires no other run args
 }
 ```
 
-Each key in the definition of `container_name` maps loosely onto an argument which will be passed to `docker run`:
+Each key in the definition of `nfprocessor` maps loosely onto an argument which will be passed to `docker run`:
 
 * port -> `-p`
 * env -> `-e`
 * dependencies -> `-link`
 * mount -> `-v`
-* image -> supplied verbatim as the last part of the run command
+* image -> supplied as-is as the last part of the run command
 
-It might be simpler to remove this abstraction and just name them exactly as per the arguments as per those passed to docker run, but you'd end up with some pretty ugly looking definitions full of single letter keys. Still, this may change.
+It might be simpler to remove this abstraction and just name these keys exactly as per the arguments passed to docker run, but you'd end up with some pretty ugly looking definitions full of single letter keys. Nevertheless, this *may* change.
 
-Notice that our env var `ANOTHER_VAR` is defined simply as `-`. This is a special value which, when the container is first created, will be substituted with the current value of `process.env['ANOTHER_VAR']`. If that yields a falsy value the user will be prompted for it.
+Notice that our env var `ANOTHER_VAR` is defined simply as `-`. This is a special value which, when the container is first created, will be substituted with the current value of `process.env['ANOTHER_VAR']`. If that yields a falsy value the user will be prompted for it. **Please note** that you will only be prompted for any missing environment variables *once* when calling `decking create <cluster>`. Of course, if you manually `docker rm` a container used in the cluster and then call `decking create <cluster>` again you will be prompted for the value once more.
 
 ### clusters (Object)
 
@@ -99,13 +105,15 @@ Keys are the names of clusters you want to refer to, values are just arrays of k
 
 ```
 "clusters": {
-  "main": ["another_container", "container_name"]
+  "main": ["nfprocessor", "nfconsumer"]
 }
 ```
 
 Note that the order we list our containers as part of each cluster definition doesn't matter - decking will resolve the dependencies based on each container's definition and make sure they start in the correct order.
 
-See [nodeflakes/decking.json](https://github.com/makeusabrew/nodeflakes/blob/master/decking.json) for a working - albeit rather simple - decking.json file.
+As we have only defined one cluster we can omit it when calling any of the main decking commands - e.g. `decking start main` can be shortened to `decking start`. If two or more cluster definitions are present then a cluster name must always be provided.
+
+See [nodeflakes/decking.json](https://github.com/makeusabrew/nodeflakes/blob/master/decking.json) for a valid - albeit rather simple - decking.json file.
 
 ## TODO
 
