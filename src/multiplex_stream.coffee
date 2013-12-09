@@ -1,7 +1,7 @@
 ContainerStream = require "./container_stream"
 
 module.exports =
-class MultiplexStream
+class DupliexStream
   constructor: (@container, @stream, @name) ->
     @container.modem.demuxStream @stream, @stdout(), @stderr()
 

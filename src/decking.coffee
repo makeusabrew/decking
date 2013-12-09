@@ -5,7 +5,8 @@ uuid          = require "node-uuid"
 DepTree       = require "deptree"
 read          = require "read"
 Docker        = require "dockerode"
-DuplexStream  = require "./duplex_stream"
+
+MultiplexStream = require "./multiplex_stream"
 
 docker = new Docker socketPath: "/var/run/docker.sock"
 logger = process.stdout
@@ -146,7 +147,7 @@ class Decking
       container.attach options, (err, stream) ->
         # woah! the stream data is a bit complex. ideally i want to pipe
         # each container's logs to a different writable stream, not process.stdout
-        new DuplexStream container, stream, padName(name, "(", ")")
+        new MultiplexStream container, stream, padName(name, "(", ")")
 
         callback null
 
