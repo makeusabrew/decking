@@ -57,11 +57,12 @@ class Decking
 
       Commands:
         build   build an image or pass 'all' to build all
-        create  create a cluster
-        start   start a cluster of containers
-        stop    stop a cluster
-        status  check the status of a cluster's containers
-        attach  attach to all running containers in a cluster
+        create   create a cluster
+        start    start a cluster of containers
+        stop     stop a cluster
+        restart  restart a cluster
+        status   check the status of a cluster's containers
+        attach   attach to all running containers in a cluster
       """
 
       log help
@@ -84,6 +85,7 @@ class Decking
     create: (done) -> @_run "create", done
     start: (done) -> @_run "start", done
     stop: (done) -> @_run "stop", done
+    restart: (done) -> @_run "restart", done
     status: (done) -> @_run "status", done
     attach: (done) -> @_run "attach", done
 
@@ -128,6 +130,26 @@ class Decking
         else
           logAction name, "skipping (already stopped)"
           callback null
+
+    resolveOrder @config, cluster, (list) ->
+
+      validateContainerPresence list, (err) ->
+        return done err if err
+
+        async.eachSeries list, iterator, done
+
+  restart: (cluster, done) ->
+    iterator = (details, callback) ->
+      name = details.name
+      container = docker.getContainer name
+      isRunning container, (err, running) ->
+        if running
+          logAction name, "restarting..."
+          container.stop (err) ->
+            container.start callback
+        else
+          logAction name, "starting..."
+          container.start callback
 
     resolveOrder @config, cluster, (list) ->
 
