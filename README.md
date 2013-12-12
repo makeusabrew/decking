@@ -148,15 +148,15 @@ optional. Opting into a group simply requires a slightly different cluster defin
 ```
 
 This would let us run two clusters based on the same containers, albeit one very clearly in
-a 'build' mode. Of course we can't have two containers with different configuration sharing
-the same name, so decking namespaces containers based on the group name. In the above example,
+a 'build' mode. Of course we can't have two containers with different configurations sharing
+the same `-name`, so decking namespaces containers based on the group name. In the above example,
 a call to `decking create dev` would look for containers named `nfprocessor.build` and
 `nfconsumer.build`. This namespacing is transparent to a user, meaning containers can always
 be thought of and referred to (i.e. as dependencies) by their original name.
 
 Note that for now, group-wide options completely overwrite any previous values for matching keys
 rather than merge them with existing ones. Likewise, a container-level override overwrites
-any previous values (even those set at group leve). This will be changed in future such that
+any previous values (even those set at group level). This will be changed in future such that
 options are merged properly in a predictable manner.
 
 See [nodeflakes/decking.json](https://github.com/makeusabrew/nodeflakes/blob/master/decking.json) for a valid - albeit rather simple - decking.json file.
