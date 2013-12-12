@@ -97,8 +97,8 @@ class Decking
     iterator = (details, callback) ->
       name = details.name
       container = docker.getContainer name
-      container.inspect (err, data) ->
-        if not data.State.Running
+      isRunning container, (err, running) ->
+        if not running
           logAction name, "starting..."
           container.start callback
         else
@@ -115,11 +115,14 @@ class Decking
 
   stop: (cluster, done) ->
 
+    # @TODO reverse dependency order? shutdown process might
+    # involve signalling to them (e.g. final write, disconnect)
+
     iterator = (details, callback) ->
       name = details.name
       container = docker.getContainer name
-      container.inspect (err, data) ->
-        if data.State.Running
+      isRunning container, (err, running) ->
+        if running
           logAction name, "stopping..."
           container.stop callback
         else
@@ -145,8 +148,6 @@ class Decking
       name = details.name
       container = docker.getContainer name
       container.attach options, (err, stream) ->
-        # woah! the stream data is a bit complex. ideally i want to pipe
-        # each container's logs to a different writable stream, not process.stdout
         new MultiplexStream container, stream, padName(name, "(", ")")
 
         callback null
@@ -241,7 +242,12 @@ class Decking
         #log "Container #{name} already exists, skipping..."
         # @TODO check if this container has dependents or not...
         logAction name, "already exists - running in case of dependents"
-        return command.container.start callback
+        return isRunning command.container, (err, running) ->
+          return command.container.start callback if not running
+
+          # container exists AND is running - stop, restart
+          return command.container.stop (err) ->
+            command.container.start callback
 
       logAction name, "creating..."
 
@@ -252,8 +258,10 @@ class Decking
       container.stop callback
 
     resolveOrder @config, cluster, (list) ->
-      async.eachSeries list, fetchIterator, ->
-        async.eachSeries commands, createIterator, ->
+      async.eachSeries list, fetchIterator, (err) ->
+        throw err if err
+        async.eachSeries commands, createIterator, (err) ->
+          throw err if err
           # @FIXME hack to avoid ghosts with quick start/stop combos
           setTimeout ->
             async.eachLimit list, 5, stopIterator, done
@@ -315,10 +323,23 @@ logAction = (name, message) ->
 
   log "#{padName(name)}  #{message}"
 
+# @TODO rename; this does more than just order resolution now!
 resolveOrder = (config, cluster, callback) ->
+  if cluster.group
+    # right! specifying a group modifier. let's pump it up...
+    groupName = cluster.group
+    containers = cluster.containers
+    group = config.groups[groupName]
+  else
+    if cluster.containers
+      containers = cluster.containers
+    else
+      containers = cluster
+
   containerDetails = {}
 
-  for containerName in cluster
+  # map container names to actual container definitions
+  for containerName in containers
     container = config.containers[containerName]
     containerDetails[containerName] = container
 
@@ -328,11 +349,33 @@ resolveOrder = (config, cluster, callback) ->
       if not containerDetails[dependency]
         containerDetails[dependency] = config.containers[dependency]
 
+  # rename any containers based on group stuff, calc some max length stuff
+  # merge group overrides if present
+  for _, container of containerDetails
+    container.originalName = container.name
+    if groupName
+      container.group = groupName
+      container.name += ".#{groupName}"
+
+      # first up, completely replace any container config with
+      # the group-wide options
+      for key, value of group.options
+        container[key] = value
+
+      # now check for container specific overrides...
+      if group.containers?[container.originalName]?
+        for key, value of group.containers[container.originalName]
+          # @TODO we're overwriting here, these should MERGE with
+          # those specified group-wide... I think. But only if there
+          # was a group wide key maybe?
+          container[key] = value
+
+    maxNameLength = container.name.length if container.name.length > maxNameLength
+
+  # resolve dependency order
   depTree = new DepTree
-  for name, details of containerDetails
-    depTree.add name, details.dependencies
-    # @NOTE while we're here, work out the longest name in the cluster (dirty)
-    maxNameLength = name.length if name.length > maxNameLength
+  for _, container of containerDetails
+    depTree.add container.originalName, container.dependencies
 
   list = (containerDetails[item] for item in depTree.resolve())
 
@@ -380,6 +423,8 @@ getRunArg = (key, val, object, done) ->
 
     when "dependencies"
       for v,k in val
+        if object.group
+          v += ".#{object.group}"
         # we trust that the aliases array has the correct matching
         # indices here such that alias[k] is the correct alias for dependencies[k]
         alias = object.aliases[k]
@@ -399,10 +444,19 @@ getCluster = (config, cluster) ->
 
     # no cluster specified, but there's only one, so just default to it
     cluster = key for key of config.clusters
-    log "Defaulting to cluster '#{cluster}'\n"
+    log "Defaulting to cluster '#{cluster}'"
 
   target = config.clusters[cluster]
 
   throw new Error "Cluster #{cluster} does not exist in decking.json"  if not target
 
+  if target.group
+    log "Using overrides from group '#{target.group}'\n"
+
   return target
+
+isRunning = (container, callback) ->
+  container.inspect (err, data) ->
+    return callback err if err
+
+    return callback null, data.State.Running
