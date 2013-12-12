@@ -113,6 +113,47 @@ Note that the order we list our containers as part of each cluster definition do
 
 As we have only defined one cluster we can omit it when calling any of the main decking commands - e.g. `decking start main` can be shortened to `decking start`. If two or more cluster definitions are present then a cluster name must always be provided.
 
+### groups (optional Object)
+
+Groups allow clusters of containers to be run with different parameters. For example:
+
+```
+"groups": {
+    "build": {
+        "options": {
+            "env":   ["NODE_ENV=build"],
+            "mount": [".:/path/to/src"]
+        }
+    },
+    "containers": {
+        "nfprocessor": {
+            "port": ["4321:1234"]
+        }
+    }
+}
+```
+
+The above would create a new group called `build`, which when used would apply the relevant options
+when creating a cluster of containers. Per-container overrides can also be set, though these are
+optional. opting into a group simply requires a slightly different cluster definition:
+
+```
+"clusters": {
+  "main": ["nfprocessor", "nfconsumer"],
+  "dev": {
+      "group": "build",
+      "containers": ["nfprocessor", "nfconsumer"]
+  }
+}
+```
+
+This would let us run two clusters based on the same containers, albeit one very clearly in
+a 'build' mode. Of course we can't have two containers with different configuration sharing
+the same name, so decking namespaces names based on the group name. In the above example,
+a call to `decking create dev` would look for containers named `nfprocessor.build` and
+`nfconsumer.build`. This namespacing is transparent to a user, meaning containers can always
+be thought of and referred to (as dependencies) by their original name.
+
 See [nodeflakes/decking.json](https://github.com/makeusabrew/nodeflakes/blob/master/decking.json) for a valid - albeit rather simple - decking.json file.
 
 ## TODO
@@ -125,5 +166,3 @@ See [nodeflakes/decking.json](https://github.com/makeusabrew/nodeflakes/blob/mas
 * rework all output to always show full container list and update lines as necessary
 * provide options to exclude 'implicit' cluster deps on start/stop/create
 * add 'destroy' method - with appropriate warnings
-* introduce concept of groups - allowing base container definitions to be merged with a group
-  which can be run with different group-level params
