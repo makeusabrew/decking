@@ -160,20 +160,42 @@ class Decking
 
   attach: (cluster, done) ->
 
-    options =
-      stream: true
-      stdout: true
-      stderr: true
-      logs: true
-      tty: false
 
-    iterator = (details, callback) ->
-      name = details.name
-      container = docker.getContainer name
+    timeout = 200
+
+    reAttach = (name, container, attempts = 0) ->
+      setTimeout ->
+        isRunning container, (err, running) ->
+          if running
+            attach name, container, false, ->
+              logAction name, "re-attached"
+          else
+            if attempts < 50
+              reAttach name, container, attempts + 1
+            else
+              logAction name, "max re-attach attempts reached, bailing..."
+      , timeout
+
+    attach = (name, container, fetchLogs, callback) ->
+      options =
+        stream: true
+        stdout: true
+        stderr: true
+        tty: false
+        logs: fetchLogs
+
       container.attach options, (err, stream) ->
         new MultiplexStream container, stream, padName(name, "(", ")")
 
-        callback null
+        stream.on "end", ->
+          logAction name, "gone away, will try to re-attaching for 10 seconds..."
+          reAttach name, container
+
+        callback? err
+
+    iterator = (details, callback) ->
+      container = docker.getContainer details.name
+      attach details.name, container, true, callback
 
     resolveOrder @config, cluster, (list) ->
 
