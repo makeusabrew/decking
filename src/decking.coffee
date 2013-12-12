@@ -434,7 +434,10 @@ getRunArg = (key, val, object, done) ->
       arg = [].concat arg, ["-p #{v}"] for v in val
 
     when "mount"
-      arg = [].concat arg, ["-v #{v}"] for v in val
+      for v in val
+        [host, remote] = v.split ":"
+        host = process.cwd() if host is "."
+        arg = [].concat arg, ["-v #{host}:#{remote}"]
 
   return done null, arg
 
