@@ -142,6 +142,7 @@ class Decking
       stream: true
       stdout: true
       stderr: true
+      logs: true
       tty: false
 
     iterator = (details, callback) ->
