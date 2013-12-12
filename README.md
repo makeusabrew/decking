@@ -36,15 +36,15 @@ context and ensure error-free mapping of Dockerfiles to image names.
 
 **create (cluster)** - create a cluster of containers based on parameters found in the decking.json file. Dependencies can be specified which will ensure containers used as `-link` parameters exist before creation of their dependents.
 
-
 **start (cluster)** - start a cluster (must call `create` first - for now). Dependencies are started first so `-link`s work properly
 
 **stop (cluster)** - stop a cluster
 
+**restart (cluster)** - restart a cluster
+
 **status (cluster)** - show the status of each container in a cluster (started / stopped / non-existent)
 
-
-**attach (cluster)** - multiplex the output from all running containers in a cluster into one stdout / stderr stream
+**attach (cluster)** - multiplex the output from all running containers in a cluster into one stdout / stderr stream. Automatically re-attaches if a container stops but comes back within 10 seconds.
 
 If you only have one cluster definition in your decking.json file (see below) then `<cluster>` may be omitted, meaning in practice you can usually simply type `decking start`, `decking stop` etc.
 
