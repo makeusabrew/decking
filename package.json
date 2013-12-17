@@ -16,7 +16,7 @@
     "grunt": "~0.4.2"
   },
   "dependencies": {
-    "dockerode": "~0.2.2",
+    "dockerode": "~0.2.4",
     "async": "~0.2.9",
     "node-uuid": "~1.4.1",
     "deptree": "~0.1.0",
