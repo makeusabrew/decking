@@ -1,4 +1,4 @@
-# decking
+# decking—simplified management for clusters of Docker containers
 
 Decking aims to simplify the creation, management and running of clusters
 of Docker containers in a way which is familiar to developers;
