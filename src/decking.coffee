@@ -161,7 +161,7 @@ class Decking
   attach: (cluster, done) ->
 
 
-    timeout = 200
+    timeout = 600
 
     reAttach = (name, container, attempts = 0) ->
       setTimeout ->
@@ -170,7 +170,7 @@ class Decking
             attach name, container, false, ->
               logAction name, "re-attached"
           else
-            if attempts < 50
+            if attempts < 100
               reAttach name, container, attempts + 1
             else
               logAction name, "max re-attach attempts reached, bailing..."
@@ -188,7 +188,7 @@ class Decking
         new MultiplexStream container, stream, padName(name, "(", ")")
 
         stream.on "end", ->
-          logAction name, "gone away, will try to re-attaching for 10 seconds..."
+          logAction name, "gone away, will try to re-attach for one minute..."
           reAttach name, container
 
         callback? err
