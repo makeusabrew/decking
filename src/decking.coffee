@@ -342,7 +342,8 @@ class Decking
 
       log "Uploading tarball..."
       docker.buildImage tarball, options, (err, res) ->
-
+        return done err if err
+        
         res.pipe process.stdout
 
         res.on "end", ->
