@@ -8,7 +8,7 @@
     "prepublish": "grunt"
   },
   "bin": {
-    "decking": "./bin/decking.js"
+    "decking": "./bin/decking"
   },
   "author": "Nick Payne",
   "license": "MIT",

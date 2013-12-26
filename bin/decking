@@ -1,5 +1,5 @@
 #!/usr/bin/env coffee
-Decking = require "../index.coffee"
+Decking = require __dirname + "/../index.coffee"
 
 options =
   command: process.argv[2]
