@@ -14,10 +14,8 @@ log    = (data) -> logger.write "#{data}\n"
 
 module.exports =
 class Decking
-  constructor: (options) ->
-    {@command, @args} = options
-
-    @config = @loadConfig "./decking.json"
+  constructor: ({@command, @args}) ->
+    @config = {}
 
   processConfig: (config) ->
     for name, details of config.containers
@@ -27,7 +25,7 @@ class Decking
 
       details.name = name
 
-      details.dependencies = [] if not details.dependencies
+      details.dependencies ?= []
       details.aliases = []
 
       for dependency,i in details.dependencies
@@ -343,7 +341,7 @@ class Decking
       log "Uploading tarball..."
       docker.buildImage tarball, options, (err, res) ->
         return done err if err
-        
+
         res.pipe process.stdout
 
         res.on "end", ->
@@ -356,6 +354,8 @@ class Decking
     fn = @commands[@command]
 
     throw new Error "Invalid argument" if typeof fn isnt "function"
+
+    @config = @loadConfig "./decking.json" if @command isnt "help"
 
     return fn.call this, (err) -> throw err if err
 
