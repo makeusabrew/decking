@@ -479,6 +479,9 @@ getRunArg = (key, val, object, done) ->
     when "port"
       arg = [].concat arg, ["-p #{v}"] for v in val
 
+    when "privileged"
+      arg = ["-privileged"] if val
+
     when "mount"
       for v in val
         [host, remote] = v.split ":"
