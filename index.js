@@ -1,1 +1,1 @@
-module.exports = require("./lib/decking");
+module.exports = require("./bin/decking");
