@@ -5,6 +5,7 @@ uuid          = require "node-uuid"
 DepTree       = require "deptree"
 read          = require "read"
 Docker        = require "dockerode"
+JSONStream    = require "JSONStream"
 
 MultiplexStream = require "./multiplex_stream"
 
@@ -342,7 +343,13 @@ class Decking
       docker.buildImage tarball, options, (err, res) ->
         return done err if err
 
-        res.pipe process.stdout
+        if res.headers["content-type"] == "application/json"
+          res
+            .pipe(JSONStream.parse 'stream')
+            .pipe(process.stdout)
+        else
+          res
+            .pipe(process.stdout)
 
         res.on "end", ->
           log "Cleaning up..."
