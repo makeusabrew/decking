@@ -123,13 +123,14 @@ Groups allow clusters of containers to be run with different parameters. For exa
         "options": {
             "env":   ["NODE_ENV=build"],
             "mount": [".:/path/to/src"]
-        }
-    },
-    "containers": {
-        "nfprocessor": {
-            "port": ["4321:1234"]
+        },
+        "containers": {
+            "nfprocessor": {
+                "port": ["4321:1234"]
+            }
         }
     }
+    
 }
 ```
 
