@@ -164,10 +164,11 @@ See [nodeflakes/decking.json](https://github.com/makeusabrew/nodeflakes/blob/mas
 ## TODO
 
 * proper error checking - so many cases not handled at all, let alone gracefully
-* better method dependencies; e.g. cluster start should `create` missing containers
 * implement optional building of parent images when given a flag
 * allow container image to be omitted if other keys are present; fuzzy match on images object
 * tests!
 * rework all output to always show full container list and update lines as necessary
 * provide options to exclude 'implicit' cluster deps on start/stop/create
 * add 'destroy' method - with appropriate warnings
+* only allow standard 'word' characters in container names
+* ensure dependencies have actually started before starting children (i.e. check port / logs)
