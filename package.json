@@ -7,6 +7,10 @@
   "scripts": {
     "prepublish": "grunt"
   },
+  "repository" : {
+    "type": "git",
+    "url": "http://github.com/makeusabrew/decking.git"
+  },
   "bin": {
     "decking": "./bin/decking.js"
   },
