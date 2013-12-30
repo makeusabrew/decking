@@ -343,9 +343,9 @@ class Decking
       docker.buildImage tarball, options, (err, res) ->
         return done err if err
 
-        if res.headers["content-type"] == "application/json"
+        if res.headers["content-type"] is "application/json"
           res
-            .pipe(JSONStream.parse 'stream')
+            .pipe(JSONStream.parse "stream")
             .pipe(process.stdout)
         else
           res
