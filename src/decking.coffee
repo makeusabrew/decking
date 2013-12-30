@@ -348,6 +348,8 @@ class Decking
             .pipe(JSONStream.parse "stream")
             .pipe(process.stdout)
         else
+          # we don't need an if/else but let's keep it for clarity; it'd be too easy to
+          # skim-read the code and misinterpret the first pipe otherwise
           res
             .pipe(process.stdout)
 
