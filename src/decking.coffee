@@ -36,6 +36,10 @@ class Decking
 
         alias = name if not alias # if we didn't get dep:alias, assume dep:dep
 
+        if not config.containers[name]?
+          err = "Dependency '#{name}' of container '#{details.name}' does not exist!"
+          throw new Error err
+
         details.dependencies[i] = name
         details.aliases[i] = alias
 
