@@ -3,7 +3,7 @@ Decking = require "../index.coffee"
 
 options =
   command: process.argv[2]
-  args: process.argv.slice 3
+  args: process.argv[3...]
 
 decking = new Decking options
 
