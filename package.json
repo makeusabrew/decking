@@ -1,13 +1,13 @@
 {
   "name": "decking",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A Docker helper to create, manage and run clusters of containers",
   "main": "index.js",
   "preferGlobal": true,
   "scripts": {
     "prepublish": "grunt"
   },
-  "repository" : {
+  "repository": {
     "type": "git",
     "url": "http://github.com/makeusabrew/decking.git"
   },
