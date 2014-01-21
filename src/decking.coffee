@@ -336,31 +336,27 @@ class Decking
     options =
       t: image
 
-    tarball = "/tmp/decking-#{uuid.v4()}.tar"
-    log "Creating tarball to upload context..."
+    log "Uploading compressed context..."
 
     # @TODO allow user to specifiy --exclude params to avoid unnecessarily huge tarballs
-    child_process.exec "tar -cf #{tarball} ./", ->
+    tar = child_process.spawn "tar", ["-c", "-", "./"]
 
-      fs.unlink "./Dockerfile", (err) -> log "[WARN] Could not remove Dockerfile" if err
+    docker.buildImage tar.stdout, options, (err, res) ->
+      return done err if err
 
-      log "Uploading tarball..."
-      docker.buildImage tarball, options, (err, res) ->
-        return done err if err
+      if res.headers["content-type"] is "application/json"
+        res
+          .pipe(JSONStream.parse "stream")
+          .pipe(process.stdout)
+      else
+        # we don't need an if/else but let's keep it for clarity; it'd be too easy to
+        # skim-read the code and misinterpret the first pipe otherwise
+        res
+          .pipe(process.stdout)
 
-        if res.headers["content-type"] is "application/json"
-          res
-            .pipe(JSONStream.parse "stream")
-            .pipe(process.stdout)
-        else
-          # we don't need an if/else but let's keep it for clarity; it'd be too easy to
-          # skim-read the code and misinterpret the first pipe otherwise
-          res
-            .pipe(process.stdout)
-
-        res.on "end", ->
-          log "Cleaning up..."
-          fs.unlink tarball, done
+      res.on "end", ->
+        log "Cleaning up..."
+        fs.unlink "./Dockerfile", (err) -> log "[WARN] Could not remove Dockerfile" if err
 
 
   execute: (done) ->
