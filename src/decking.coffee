@@ -336,10 +336,11 @@ class Decking
     options =
       t: image
 
-    tarball = "/tmp/decking-#{uuid.v4()}.tar.bz"
+    tarball = "/tmp/decking-#{uuid.v4()}.tar"
     log "Creating tarball to upload context..."
 
-    child_process.exec "tar -cjf #{tarball} ./", ->
+    # @TODO allow user to specifiy --exclude params to avoid unnecessarily huge tarballs
+    child_process.exec "tar -cf #{tarball} ./", ->
 
       fs.unlink "./Dockerfile", (err) -> log "[WARN] Could not remove Dockerfile" if err
 
