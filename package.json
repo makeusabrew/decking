@@ -20,11 +20,11 @@
     "grunt": "~0.4.2"
   },
   "dependencies": {
-    "dockerode": "~0.2.4",
     "async": "~0.2.9",
     "node-uuid": "~1.4.1",
     "deptree": "~0.1.0",
     "read": "~1.0.5",
-    "JSONStream": "~0.7.1"
+    "JSONStream": "~0.7.1",
+    "dockerode": "~1.2.2"
   }
 }
