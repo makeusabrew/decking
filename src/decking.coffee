@@ -342,6 +342,8 @@ class Decking
     tar = child_process.spawn "tar", ["-c", "-", "./"]
 
     docker.buildImage tar.stdout, options, (err, res) ->
+      fs.unlink "./Dockerfile", (err) -> log "[WARN] Could not remove Dockerfile" if err
+
       return done err if err
 
       if res.headers["content-type"] is "application/json"
@@ -353,11 +355,6 @@ class Decking
         # skim-read the code and misinterpret the first pipe otherwise
         res
           .pipe(process.stdout)
-
-      res.on "end", ->
-        log "Cleaning up..."
-        fs.unlink "./Dockerfile", (err) -> log "[WARN] Could not remove Dockerfile" if err
-
 
   execute: (done) ->
     @command = "help" if not @command or @command is "-h" or @command is "--help"
