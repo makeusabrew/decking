@@ -356,6 +356,8 @@ class Decking
         res
           .pipe(process.stdout)
 
+      res.on "end", done
+
   execute: (done) ->
     @command = "help" if not @command or @command is "-h" or @command is "--help"
     fn = @commands[@command]
