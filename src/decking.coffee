@@ -47,14 +47,33 @@ class Decking
       throw new Error "No clusters defined!"
 
     for name, details of config.clusters
+      # convert shorthand of list of containers
+      if Array.isArray details
+        details = config.clusters[name] =
+          containers: details
+
       # explicit group; check it exists
       if details.group and not config.groups[details.group]
         err = "Cluster #{name} references invalid group #{details.group}"
         throw new Error err
 
-      # no group, but does the key match one?
+      # no group, but does the key match one? If so use it
       if not details.group and config.groups[name]
         details.group = name
+
+      # right, check out each container in the cluster
+      for container, index in details.containers
+        if typeof container is "string"
+          container = details.containers[index] =
+            name: container
+            count: 1
+
+        containerLookup = config.containers[container.name]
+
+        if not containerLookup
+          throw new Error("Container #{container.name} does not exist")
+
+        container.object = containerLookup
 
     return config
 
@@ -235,10 +254,8 @@ class Decking
 
         callback null
 
-    # true, we don't care about the order of a cluster,
-    # but we *do* care about implicit containers, so we have to run this
-    # for now. Should split the methods out
-    resolveOrder @config, cluster, (list) -> async.eachLimit list, 5, iterator, done
+    resolveOrder @config, cluster, (list) ->
+      async.eachSeries list, iterator, done
 
   create: (cluster, done) ->
     # create a container based on metadata
@@ -396,30 +413,20 @@ resolveOrder = (config, cluster, callback) ->
   if cluster.group
     # right! specifying a group modifier. let's pump it up...
     groupName = cluster.group
-    containers = cluster.containers
     group = config.groups[groupName]
-  else
-    if cluster.containers
-      # longhand, explicit container list
-      containers = cluster.containers
-    else
-      # shorthand, just an array of container names
-      containers = cluster
 
   containerDetails = {}
 
   # map container names to actual container definitions
-  for containerName in containers
-    container = config.containers[containerName]
+  for container in cluster.containers
+    containerDetails[container.name] = container.object
 
-    if not container
-      throw new Error("Container #{containerName} does not exist")
-
-    containerDetails[containerName] = container
+    # bit of a fudge; tack on how many instances to spawn
+    containerDetails[container.name].count = container.count
 
     # dependencies might not be listed in the cluster but still
     # need to be resolved
-    for dependency in container.dependencies
+    for dependency in container.object.dependencies
       if not containerDetails[dependency]
         containerDetails[dependency] = config.containers[dependency]
 
@@ -446,7 +453,10 @@ resolveOrder = (config, cluster, callback) ->
           container[key] = value
 
     # just used for formatting so we pad the container names equally
-    maxNameLength = container.name.length if container.name.length > maxNameLength
+    length = container.name.length
+    # this is a multi-node definition so we'll suffix it .(n) in a minute
+    length += container.count.toString().length if container.count > 1
+    maxNameLength = length if length > maxNameLength
 
   # resolve dependency order
   depTree = new DepTree
@@ -455,7 +465,18 @@ resolveOrder = (config, cluster, callback) ->
 
   list = (containerDetails[item] for item in depTree.resolve())
 
-  callback list
+  # nearly there, we've got a flattened list, but we need to make sure we have
+  # the correct number of nodes for each container
+  final = []
+  for originalContainer in list
+    for i in [1..originalContainer.count]
+      # dirty clone!
+      container = JSON.parse JSON.stringify originalContainer
+      container.index = i
+      container.name += ".#{i}" if container.count > 1
+      final.push container
+
+  callback final
 
 validateContainerPresence = (list, done) ->
   iterator = (details, callback) ->
