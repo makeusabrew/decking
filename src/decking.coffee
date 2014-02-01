@@ -68,6 +68,10 @@ class Decking
             name: container
             count: 1
 
+        # allow multi-node containers to be defined as name(n)
+        matches = container.name.match(/(.+)\((\d+)\)$/)
+        [_, container.name, container.count] = matches if matches
+
         containerLookup = config.containers[container.name]
 
         if not containerLookup
