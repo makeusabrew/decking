@@ -13,6 +13,8 @@ docker = new Docker socketPath: "/var/run/docker.sock"
 logger = process.stdout
 log    = (data) -> logger.write "#{data}\n"
 
+version = require("#{__dirname}/../package.json").version
+
 module.exports =
 class Decking
   constructor: ({@command, @args}) ->
@@ -102,6 +104,8 @@ class Decking
         restart  restart a cluster
         status   check the status of a cluster's containers
         attach   attach to all running containers in a cluster
+
+      Version: #{version}
       """
 
       log help
