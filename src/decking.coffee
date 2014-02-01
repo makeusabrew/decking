@@ -43,6 +43,19 @@ class Decking
         details.dependencies[i] = name
         details.aliases[i] = alias
 
+    if not Object.keys(config.clusters || {}).length
+      throw new Error "No clusters defined!"
+
+    for name, details of config.clusters
+      # explicit group; check it exists
+      if details.group and not config.groups[details.group]
+        err = "Cluster #{name} references invalid group #{details.group}"
+        throw new Error err
+
+      # no group, but does the key match one?
+      if not details.group and config.groups[name]
+        details.group = name
+
     return config
 
   parseConfig: (data) -> JSON.parse data
@@ -387,8 +400,10 @@ resolveOrder = (config, cluster, callback) ->
     group = config.groups[groupName]
   else
     if cluster.containers
+      # longhand, explicit container list
       containers = cluster.containers
     else
+      # shorthand, just an array of container names
       containers = cluster
 
   containerDetails = {}
