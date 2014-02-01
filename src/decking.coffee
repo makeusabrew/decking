@@ -438,6 +438,7 @@ resolveOrder = (config, cluster, callback) ->
     for dependency in container.object.dependencies
       if not containerDetails[dependency]
         containerDetails[dependency] = config.containers[dependency]
+        containerDetails[dependency].count = 1
 
   # rename any containers based on group stuff, calc some max length stuff
   # merge group overrides if present
