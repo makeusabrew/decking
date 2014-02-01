@@ -375,7 +375,7 @@ class Decking
     @command = "help" if not @command or @command is "-h" or @command is "--help"
     fn = @commands[@command]
 
-    throw new Error "Invalid argument" if typeof fn isnt "function"
+    throw new Error "Unknown method #{@command}" if typeof fn isnt "function"
 
     @config = @loadConfig "./decking.json" if @command isnt "help"
 
@@ -411,10 +411,14 @@ resolveOrder = (config, cluster, callback) ->
   # map container names to actual container definitions
   for containerName in containers
     container = config.containers[containerName]
+
+    if not container
+      throw new Error("Container #{containerName} does not exist")
+
     containerDetails[containerName] = container
 
-    # some dependencies might not be listed in the cluster but still need
-    # to be resolved
+    # dependencies might not be listed in the cluster but still
+    # need to be resolved
     for dependency in container.dependencies
       if not containerDetails[dependency]
         containerDetails[dependency] = config.containers[dependency]
@@ -423,6 +427,7 @@ resolveOrder = (config, cluster, callback) ->
   # merge group overrides if present
   for _, container of containerDetails
     container.originalName = container.name
+
     if groupName
       container.group = groupName
       container.name += ".#{groupName}"
@@ -440,6 +445,7 @@ resolveOrder = (config, cluster, callback) ->
           # was a group wide key maybe?
           container[key] = value
 
+    # just used for formatting so we pad the container names equally
     maxNameLength = container.name.length if container.name.length > maxNameLength
 
   # resolve dependency order
@@ -495,8 +501,8 @@ getRunArg = (key, val, object, done) ->
       for v,k in val
         if object.group
           v += ".#{object.group}"
-        # we trust that the aliases array has the correct matching
-        # indices here such that alias[k] is the correct alias for dependencies[k]
+        # we trust that the aliases array has the correct matching indices
+        # here such that alias[k] is the correct alias for dependencies[k]
         alias = object.aliases[k]
         arg = [].concat arg, ["-link #{v}:#{alias}"]
 
