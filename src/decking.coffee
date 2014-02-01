@@ -204,7 +204,6 @@ class Decking
 
   attach: (cluster, done) ->
 
-
     timeout = 600
 
     reAttach = (name, container, attempts = 0) ->
@@ -257,7 +256,16 @@ class Decking
         if err # @TODO inspect
           logAction name, "does not exist"
         else if data.State.Running
-          logAction name, "running" # @TODO more details
+          str = "running  "
+          ip = data.NetworkSettings.IPAddress
+          str += ip
+          for local,host of data.NetworkSettings.Ports
+            host = host?[0]
+            str += "  "
+            if host
+              str += "#{host.HostIp}:#{host.HostPort}->"
+            str += local
+          logAction name, str
         else
           logAction name, "stopped"
 
