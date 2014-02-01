@@ -547,6 +547,11 @@ getRunArg = (key, val, object, done) ->
     when "mount"
       for v in val
         [host, remote] = v.split ":"
+        matches = host.match /^\.(.*)$/
+        if matches
+          path = require "path"
+          host = path.join process.cwd(), matches[1]
+
         host = process.cwd() if host is "."
         arg = [].concat arg, ["-v #{host}:#{remote}"]
 
