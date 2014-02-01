@@ -32,26 +32,16 @@
 <p>Decking aims to simplify the creation, management and running of clusters
 of Docker containers in a way which is familiar to developers;
 by reading information from a <code>decking.json</code> package file
-on a project by project basis.</p>
-
-<p>It simplifies the <b>building of images</b> based on local Dockerfiles which can ordinarily be a time-consuming and error prone process (building the wrong Dockerfile as the wrong image, and having to move the Dockerfile to the root of a project in order to make the <code>ADD</code> directive work properly).</p>
-
-<p>It simplifies the <b>creation of containers</b> by considering <code>docker run</code> parameters to be part of the definition of each
-container - again meaning less room for error as each developer doesn't have to remember the correct run time parameters to use when creating each container.</p>
-
-<p>It simplifies the <b>running of containers</b> by allowing dependencies to be specified, ensuring that all containers forming
-part of a cluster are started in the correct order such that <code>-link</code> parameters work as expected. Entire clusters of containers can be started, stopped or attached to with a single command, without having to worry about restarting them in dependency order.</p>
-
-<p>It intends to use the Docker Remote API wherever possible (not everywhere, does
-not appear to support <code>-name</code> and <code>-link</code> flags yet).</p>
-
-<p>Please view <a href="http://showterm.io/21bc0f5d5ddbe4a1c4f2a">this showterm recording</a> of decking in action as used by <a href="https://github.com/makeusabrew/nodeflakes">makeusabrew/nodeflakes</a> (check out its <a href="https://github.com/makeusabrew/nodeflakes/blob/master/decking.json">decking.json</a> definition for full details).</p>
+on a project by project basis. You can view a
+<a href="http://showterm.io/21bc0f5d5ddbe4a1c4f2a">showterm recording</a>
+of decking in action or check out a simple
+<a href="https://github.com/makeusabrew/nodeflakes/blob/master/decking.json">decking.json</a>
+example file.</p>
 
 <h2>
 <a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
 
-
-<p>Although under heavy development, the more recent 0.0.x releases on npm are stable:</p>
+<p>Although under heavy development, the more recent releases on npm are stable:</p>
 
 <pre class="reduced">$ [sudo] <b>npm install -g decking</b></pre>
 
@@ -78,7 +68,22 @@ Version: 0.0.12</pre>
 by a local <b>decking.json</b> file.</p>
 
 <h2>
-<a name="deckingjson-format" class="anchor" href="#deckingjson-format"><span class="octicon octicon-link"></span></a>decking.json format</h2>
+<a name="about" class="anchor" href="#about"><span class="octicon octicon-link"></span></a>Why?</h2>
+
+<p>Decking simplifies the <b>building of images</b> based on local Dockerfiles which can ordinarily be a time-consuming and error prone process (building the wrong Dockerfile as the wrong image, and having to move the Dockerfile to the root of a project in order to make the <code>ADD</code> directive work properly).</p>
+
+<p>It simplifies the <b>creation of containers</b> by considering <code>docker run</code> parameters to be part of the definition of each
+container - again meaning less room for error as each developer doesn't have to remember the correct run time parameters to use when creating each container.</p>
+
+<p>It simplifies the <b>running of containers</b> by allowing dependencies to be specified, ensuring that all containers forming
+part of a cluster are started in the correct order such that <code>-link</code> parameters work as expected. Entire clusters of containers can be started, stopped or attached to with a single command, without having to worry about restarting them in dependency order.</p>
+
+<!--<p>It intends to use the Docker Remote API wherever possible (not everywhere, does
+not appear to support <code>-name</code> and <code>-link</code> flags yet).</p>-->
+
+
+<h2>
+<a name="deckingjson-format" class="anchor" href="#deckingjson-format"><span class="octicon octicon-link"></span></a>The decking.json file format</h2>
 
 <p>The decking.json format aims to be clear, concise and simple. Note that the file
 must be present in the current working directory; decking will not recurse up parent
@@ -92,6 +97,11 @@ directories looking for a valid definition file. The top-level keys are:</p>
 
 <h3>
 <a name="images-object" class="anchor" href="#images-object"><span class="octicon octicon-link"></span></a>images</h3>
+
+<p>Docker images define the templates from which containers are built; decking gives them
+a boost by being able to build them in batches and resolving commonly encountered
+&lsquo;context&rsquo; difficulties:</p>
+
 <ul class="requirements">
   <li>required: <b>no</b></li>
   <li>type: <b>object</b></li>
@@ -116,6 +126,11 @@ that any <code>ADD</code> directives will be relative to your project root.</p>
 
 <h3>
 <a name="containers" class="anchor" href="#containers"><span class="octicon octicon-link"></span></a>containers</h3>
+
+<p>Containers define the runtime configuration for a given image. They let you
+model instances&mdash;and crucially, their dependencies&mdash;in a clear, clean
+and repeatable manner, meaning you don&rsquo;t have to remember all those arguments
+when creating a new container.</p>
 
 <ul class="requirements">
   <li>required: <b>yes</b></li>
@@ -165,6 +180,10 @@ the value once more.</p>
 <h3>
 <a name="clusters" class="anchor" href="#clusters"><span class="octicon octicon-link"></span></a>clusters</h3>
 
+<p>Clusters define sets of related containers which&mdash;presumably&mdash;combine
+in some useful way (e.g. a master &amp; slave database, a couple of web servers
+and a load balancer). This is where it all happens!
+
 <ul class="requirements">
   <li>required: <b>yes</b></li>
   <li>type: <b>object</b></li>
@@ -193,12 +212,17 @@ then a cluster name must always be provided.</p>
 <h3>
 <a name="groups-optional-object" class="anchor" href="#groups-optional-object"><span class="octicon octicon-link"></span></a>groups</h3>
 
+<p>Groups allow clusters of containers to be run with different parameters, usually
+to support small configuration variations across different environments (e.g.
+build, test, production).</p>
+
 <ul class="requirements">
   <li>required: <b>no</b></li>
   <li>type: <b>object</b></li>
 </ul>
 
-<p>Groups allow clusters of containers to be run with different parameters. For example:</p>
+<p>Keys are the names of cluster definitions to override, values are
+cluster-wide and container-specific overrides:</p>
 
 <pre><code>"groups": {
     "build": {
@@ -216,9 +240,10 @@ then a cluster name must always be provided.</p>
 }
 </code></pre>
 
-<p>The above would create a new group called <code>build</code>, which when used would apply the relevant options
-when creating a cluster of containers. Per-container overrides can also be set, though these are
-optional. Opting into a group simply requires a slightly different cluster definition:</p>
+<p>The above would create a new group called <code>build</code>, which when
+used would apply the relevant options when creating a cluster of containers.
+Per-container overrides can also be set, though these are optional. Opting
+into a group simply requires a slightly different cluster definition:</p>
 
 <pre><code>"clusters": {
   "main": ["nfprocessor", "nfconsumer"],
@@ -230,7 +255,7 @@ optional. Opting into a group simply requires a slightly different cluster defin
 </code></pre>
 
 <p>This would let us run two clusters based on the same containers, albeit one very clearly in
-a 'build' mode. Of course we can't have two containers with different configurations sharing
+&lsquo;build&rsquo; mode. Of course we can't have two containers with different configurations sharing
 the same <code>-name</code>, so decking namespaces containers based on the group name. In the above example,
 a call to <code>decking create dev</code> would look for containers named <code>nfprocessor.build</code> and
 <code>nfconsumer.build</code>. This namespacing is transparent to a user, meaning containers can always
@@ -240,8 +265,6 @@ be thought of and referred to (i.e. as dependencies) by their original name.</p>
 rather than merge them with existing ones. Likewise, a container-level override overwrites
 any previous values (even those set at group level). This will be changed in future such that
 options are merged properly in a predictable manner.</p>
-
-<p>See <a href="https://github.com/makeusabrew/nodeflakes/blob/master/decking.json">nodeflakes/decking.json</a> for a valid - albeit rather simple - decking.json file.</p>
 
         </section>
 
