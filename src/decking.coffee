@@ -97,7 +97,7 @@ class Decking
       Usage: decking COMMAND [arg...]
 
       Commands:
-        build   build an image or pass 'all' to build all
+        build    build an image or pass 'all' to build all
         create   create a cluster
         start    start a cluster of containers
         stop     stop a cluster
@@ -106,6 +106,7 @@ class Decking
         attach   attach to all running containers in a cluster
 
       Version: #{version}
+
       """
 
       log help
