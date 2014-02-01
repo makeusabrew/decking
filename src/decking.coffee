@@ -455,6 +455,8 @@ resolveOrder = (config, cluster, callback) ->
     # just used for formatting so we pad the container names equally
     length = container.name.length
     # this is a multi-node definition so we'll suffix it .(n) in a minute
+    # we can't do it here because we don't have unique objects for each
+    # n instance; we just have one canonical container at this point
     length += container.count.toString().length if container.count > 1
     maxNameLength = length if length > maxNameLength
 

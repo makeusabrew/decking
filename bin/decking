@@ -1,10 +1,18 @@
 #!/usr/bin/env coffee
+domain  = require "domain"
+colors  = require "colors"
 Decking = require "../index.coffee"
+
 
 options =
   command: process.argv[2]
   args: process.argv[3...]
 
-decking = new Decking options
+d = domain.create()
 
-decking.execute()
+d.on "error", (e) ->
+  console.log e.stack.red
+
+d.run -> setImmediate ->
+  decking = new Decking options
+  decking.execute()
