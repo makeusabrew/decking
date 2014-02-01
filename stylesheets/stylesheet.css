@@ -369,6 +369,29 @@ footer a:hover {
 * html .clearfix {height: 1%;}
 .clearfix {display: block;}
 
+b,strong {
+    font-weight: bold;
+}
+
+em,i {
+    font-style:italic;
+}
+
+pre.reduced {
+    padding:5px;
+    border:0;
+}
+
+.requirements {
+    font-size:0.8em;
+    margin-bottom:10px;
+}
+
+.small {
+    font-size:0.85em;
+}
+
+
 /* #Media Queries
 ================================================== */
 

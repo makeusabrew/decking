@@ -12,14 +12,14 @@
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
-    <title>A Docker helper to create, manage and run clusters of containers | decking.io</title>
+    <title>Create, manage and run clusters of Docker containers | decking.io</title>
   </head>
 
   <body>
     <header>
       <div class="inner">
         <h1>decking.io</h1>
-        <h2>A Docker helper to create, manage and run clusters of containers</h2>
+        <h2>Create, manage and run clusters of Docker containers</h2>
         <a href="https://github.com/makeusabrew/decking" class="button"><small>View project on</small>GitHub</a>
       </div>
     </header>
@@ -27,20 +27,19 @@
     <div id="content-wrapper">
       <div class="inner clearfix">
         <section id="main-content">
-          <h1>
-<a name="deckingsimplified-management-for-clusters-of-docker-containers" class="anchor" href="#deckingsimplified-management-for-clusters-of-docker-containers"><span class="octicon octicon-link"></span></a>decking—simplified management for clusters of Docker containers</h1>
+          <h1> <span class="octicon octicon-link"></span>Simplified management for clusters of Docker containers</h1>
 
 <p>Decking aims to simplify the creation, management and running of clusters
 of Docker containers in a way which is familiar to developers;
 by reading information from a <code>decking.json</code> package file
 on a project by project basis.</p>
 
-<p>It simplifies the building of images based on local Dockerfiles which can ordinarily be a time-consuming and error prone process (building the wrong Dockerfile as the wrong image, and having to move the Dockerfile to the root of a project in order to make the <code>ADD</code> directive work properly).</p>
+<p>It simplifies the <b>building of images</b> based on local Dockerfiles which can ordinarily be a time-consuming and error prone process (building the wrong Dockerfile as the wrong image, and having to move the Dockerfile to the root of a project in order to make the <code>ADD</code> directive work properly).</p>
 
-<p>It simplifies the creation of containers by considering <code>docker run</code> parameters to be part of the definition of each
+<p>It simplifies the <b>creation of containers</b> by considering <code>docker run</code> parameters to be part of the definition of each
 container - again meaning less room for error as each developer doesn't have to remember the correct run time parameters to use when creating each container.</p>
 
-<p>It simplifies the running of containers by allowing dependencies to be specified, ensuring that all containers forming
+<p>It simplifies the <b>running of containers</b> by allowing dependencies to be specified, ensuring that all containers forming
 part of a cluster are started in the correct order such that <code>-link</code> parameters work as expected. Entire clusters of containers can be started, stopped or attached to with a single command, without having to worry about restarting them in dependency order.</p>
 
 <p>It intends to use the Docker Remote API wherever possible (not everywhere, does
@@ -51,45 +50,57 @@ not appear to support <code>-name</code> and <code>-link</code> flags yet).</p>
 <h2>
 <a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
 
-<p>Be warned: decking is <em>very</em> rough around the edges at the moment. If you want to get stuck in
-then just clone the repository and run <code>./bin/decking</code> - it'll display the most up-to-date
-list of commands (which might not be the same as those listed below). You'll need CoffeeScript
-to run the executable. Alternatively, you can install the latest version published on npm:</p>
 
-<p><code>sudo npm install -g decking</code></p>
+<p>Although under heavy development, the more recent 0.0.x releases on npm are stable:</p>
 
-<p>Note that the 0.0.x releases on npm are likely to be pretty unstable!</p>
+<pre class="reduced">$ [sudo] <b>npm install -g decking</b></pre>
 
-<h2>
-<a name="methods" class="anchor" href="#methods"><span class="octicon octicon-link"></span></a>Methods</h2>
+<p>Alternatively, just clone the repo and run <code>./bin/decking</code>. You&rsquo;ll
+need CoffeeScript installed globally in order for this to work.</p>
 
-<p><strong>build (image | all)</strong> - alleviate the inconvenience of ADD requiring a local (./ downwards)
-context and ensure error-free mapping of Dockerfiles to image names.</p>
+<p>Once installed decking can be run (without arguments) from anywhere:</p>
+<pre>$ <b>decking</b>
 
-<p><strong>create (cluster)</strong> - create a cluster of containers based on parameters found in the decking.json file. Dependencies can be specified which will ensure containers used as <code>-link</code> parameters exist before creation of their dependents.</p>
+Usage: decking COMMAND [arg...]
 
-<p><strong>start (cluster)</strong> - start a cluster (must call <code>create</code> first - for now). Dependencies are started first so <code>-link</code>s work properly</p>
+Commands:
+  build    build an image or pass 'all' to build all
+  create   create a cluster of containers
+  start    start a cluster
+  stop     stop a cluster
+  restart  restart a cluster
+  status   check the status of a cluster's containers
+  attach   attach to all running containers in a cluster
 
-<p><strong>stop (cluster)</strong> - stop a cluster</p>
+Version: 0.0.12</pre>
 
-<p><strong>restart (cluster)</strong> - restart a cluster</p>
-
-<p><strong>status (cluster)</strong> - show the status of each container in a cluster (started / stopped / non-existent)</p>
-
-<p><strong>attach (cluster)</strong> - multiplex the output from all running containers in a cluster into one stdout / stderr stream. Automatically re-attaches if a container stops but comes back within 10 seconds.</p>
-
-<p>If you only have one cluster definition in your decking.json file (see below) then <code>&lt;cluster&gt;</code> may be omitted, meaning in practice you can usually simply type <code>decking start</code>, <code>decking stop</code> etc.</p>
+<p>These commands only make sense with some context; that context must be provided
+by a local <b>decking.json</b> file.</p>
 
 <h2>
 <a name="deckingjson-format" class="anchor" href="#deckingjson-format"><span class="octicon octicon-link"></span></a>decking.json format</h2>
 
+<p>The decking.json format aims to be clear, concise and simple. Note that the file
+must be present in the current working directory; decking will not recurse up parent
+directories looking for a valid definition file. The top-level keys are:</p>
+
+<pre><code>"images":     { /* the images which power your containers */ },
+"containers": { /* the container templates which make up your clusters */ },
+"clusters":   { /* lists of containers which combine to form a cluster */ },
+"groups":     { /* optional overrides for different environments */ }
+</code></pre>
+
 <h3>
-<a name="images-object" class="anchor" href="#images-object"><span class="octicon octicon-link"></span></a>images (Object)</h3>
+<a name="images-object" class="anchor" href="#images-object"><span class="octicon octicon-link"></span></a>images</h3>
+<ul class="requirements">
+  <li>required: <b>no</b></li>
+  <li>type: <b>object</b></li>
+</ul>
 
 <p>Each key is the name of the image you want to build. Each value is the location of
-the <em>local</em> Dockerfile relative to the project root. That's right; only local images
+the <em>local</em> Dockerfile relative to the project root. Only local images
 can be built at the moment, although eventually you'll be able to specify tag names
-to build an image from the Docker Index instead.</p>
+as values in to build an image from the Docker Index instead.</p>
 
 <pre><code>"images": {
   "makeusabrew/nodeflakes": "./docker/base",
@@ -99,16 +110,27 @@ to build an image from the Docker Index instead.</p>
 }
 </code></pre>
 
-<p>When building an image the relevant Dockerfile will be copied to the root of your project (i.e. to the same level as your decking.json file) such that any <code>ADD</code> directives will be relative to your project root (which in my experience, or at least how I use Dockerfiles, is always the desired behaviour).</p>
+<p>When building an image the relevant Dockerfile will be copied to the root
+of your project (i.e. to the same directory as your decking.json file) such
+that any <code>ADD</code> directives will be relative to your project root.</p>
 
 <h3>
-<a name="containers-object" class="anchor" href="#containers-object"><span class="octicon octicon-link"></span></a>containers (Object)</h3>
+<a name="containers" class="anchor" href="#containers"><span class="octicon octicon-link"></span></a>containers</h3>
 
-<p>Keys are the names you want to run your images as (e.g. <code>docker run -name &lt;key&gt; ...</code>). Values are either a string - in which case they must refer to a valid <code>images</code> key - or an object. A definition of two containers demonstrating both approaches might look a bit like this:</p>
+<ul class="requirements">
+  <li>required: <b>yes</b></li>
+  <li>type: <b>object</b></li>
+</ul>
+
+<p>Keys are the names you want to run your containers as (e.g.
+<code>docker run -name &lt;key&gt; ...</code>). Values are either
+a string&mdash;in which case they must refer to a valid <code>images</code>
+key&mdash;or an object. A definition of two containers demonstrating
+both approaches might look a bit like this:</p>
 
 <pre><code>"containers": {
   "nfprocessor": {
-    "image": "makeusabrew/nodeflakes-processor",  // must exist in images object
+    "image": "makeusabrew/nodeflakes-processor",
     "port" : ["1234:1234"],
     "env": : ["MY_ENV_VAR=value", "ANOTHER_VAR=-"]
     "dependencies": [
@@ -116,42 +138,65 @@ to build an image from the Docker Index instead.</p>
     ],
     "mount": ["/path/to/host-dir:/path/to/container-dir"]
   },
-  "nfconsumer": "makeusabrew/nodeflakes-consumer"  // shorthand, this container requires no other run args
+  "nfconsumer": "makeusabrew/nodeflakes-consumer"
 }
 </code></pre>
 
 <p>Each key in the definition of <code>nfprocessor</code> maps loosely onto an argument which will be passed to <code>docker run</code>:</p>
 
-<ul>
-<li>port -&gt; <code>-p</code>
-</li>
-<li>env -&gt; <code>-e</code>
-</li>
-<li>dependencies -&gt; <code>-link</code>
-</li>
-<li>mount -&gt; <code>-v</code>
-</li>
-<li>image -&gt; supplied as-is as the last part of the run command</li>
-</ul><p>It might be simpler to remove this abstraction and just name these keys exactly as per the arguments passed to docker run, but you'd end up with some pretty ugly looking definitions full of single letter keys. Nevertheless, this <em>may</em> change.</p>
+<pre class="reduced">port         &rarr; <b>-p</b>
+env          &rarr; <b>-e</b>
+dependencies &rarr; <b>-link</b>
+mount        &rarr; <b>-v</b>
+image        &ndash; supplied as-is as the last part of the run command</pre>
 
-<p>Notice that our env var <code>ANOTHER_VAR</code> is defined simply as <code>-</code>. This is a special value which, when the container is first created, will be substituted with the current value of <code>process.env['ANOTHER_VAR']</code>. If that yields a falsy value the user will be prompted for it. <strong>Please note</strong> that you will only be prompted for any missing environment variables <em>once</em> when calling <code>decking create &lt;cluster&gt;</code>. Of course, if you manually <code>docker rm</code> a container used in the cluster and then call <code>decking create &lt;cluster&gt;</code> again you will be prompted for the value once more.</p>
+<!--<p>It might be simpler to remove this abstraction and just name these keys exactly as per the arguments passed to docker run, but you'd end up with some pretty ugly looking definitions full of single letter keys. Nevertheless, this <em>may</em> change.</p>-->
+
+<p>Notice that our env var <code>ANOTHER_VAR</code> is defined simply as
+<code>-</code>. This is a special value which, when the container is first created,
+will be substituted with the current value of
+<code>process.env['ANOTHER_VAR']</code>. If that yields a falsy value the user
+will be prompted for it. You will only be prompted for any missing environment
+variables when calling <code>decking create &lt;cluster&gt;</code>. Of course,
+if you manually <code>docker rm</code> a container used in the cluster and then
+call <code>decking create &lt;cluster&gt;</code> again you will be prompted for
+the value once more.</p>
 
 <h3>
-<a name="clusters-object" class="anchor" href="#clusters-object"><span class="octicon octicon-link"></span></a>clusters (Object)</h3>
+<a name="clusters" class="anchor" href="#clusters"><span class="octicon octicon-link"></span></a>clusters</h3>
 
-<p>Keys are the names of clusters you want to refer to, values are just arrays of keys found in the <code>containers</code> object. These definitions are simple as most of the configuration has already been done:</p>
+<ul class="requirements">
+  <li>required: <b>yes</b></li>
+  <li>type: <b>object</b></li>
+</ul>
+
+<p>Keys are the names of clusters you want to refer to, values are usually
+just arrays of keys found in the <code>containers</code> object. These
+definitions are simple as most of the configuration has already been done
+elsewhere:</p>
 
 <pre><code>"clusters": {
   "main": ["nfprocessor", "nfconsumer"]
 }
 </code></pre>
 
-<p>Note that the order we list our containers as part of each cluster definition doesn't matter - decking will resolve the dependencies based on each container's definition and make sure they start in the correct order.</p>
+<p>The order we list our containers as part of each cluster definition
+doesn't matter - decking will resolve the dependencies based on each
+container's definition and make sure they start in the correct order.</p>
 
-<p>As we have only defined one cluster we can omit it when calling any of the main decking commands - e.g. <code>decking start main</code> can be shortened to <code>decking start</code>. If two or more cluster definitions are present then a cluster name must always be provided.</p>
+<p>As we have only defined one cluster we can omit it when calling any
+of the cluster related commands &ndash; e.g.
+<code>decking start main</code> can be shortened to
+<code>decking start</code>. If two or more cluster definitions are present
+then a cluster name must always be provided.</p>
 
 <h3>
-<a name="groups-optional-object" class="anchor" href="#groups-optional-object"><span class="octicon octicon-link"></span></a>groups (optional Object)</h3>
+<a name="groups-optional-object" class="anchor" href="#groups-optional-object"><span class="octicon octicon-link"></span></a>groups</h3>
+
+<ul class="requirements">
+  <li>required: <b>no</b></li>
+  <li>type: <b>object</b></li>
+</ul>
 
 <p>Groups allow clusters of containers to be run with different parameters. For example:</p>
 
@@ -198,20 +243,6 @@ options are merged properly in a predictable manner.</p>
 
 <p>See <a href="https://github.com/makeusabrew/nodeflakes/blob/master/decking.json">nodeflakes/decking.json</a> for a valid - albeit rather simple - decking.json file.</p>
 
-<h2>
-<a name="todo" class="anchor" href="#todo"><span class="octicon octicon-link"></span></a>TODO</h2>
-
-<ul>
-<li>proper error checking - so many cases not handled at all, let alone gracefully</li>
-<li>implement optional building of parent images when given a flag</li>
-<li>allow container image to be omitted if other keys are present; fuzzy match on images object</li>
-<li>tests!</li>
-<li>rework all output to always show full container list and update lines as necessary</li>
-<li>provide options to exclude 'implicit' cluster deps on start/stop/create</li>
-<li>add 'destroy' method - with appropriate warnings</li>
-<li>only allow standard 'word' characters in container names</li>
-<li>ensure dependencies have actually started before starting children (i.e. check port / logs)</li>
-</ul>
         </section>
 
         <aside id="sidebar">
@@ -224,7 +255,7 @@ options are merged properly in a predictable manner.</p>
             .tar.gz file
           </a>
 
-          <p class="repo-owner"><a href="https://github.com/makeusabrew/decking"></a> is maintained by <a href="https://github.com/makeusabrew">makeusabrew</a>.</p>
+          <p class="repo-owner"><a href="https://github.com/makeusabrew/decking">decking</a> is maintained by <a href="https://github.com/makeusabrew">makeusabrew</a>.</p>
 
           <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
         </aside>
