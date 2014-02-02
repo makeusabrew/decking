@@ -38,5 +38,9 @@ describe "Runner", ->
 
             Runner.getArg "env", ["ENV1=-", "ENV2=val2"], {}, (err, @arg) => done()
 
+            setTimeout ->
+              process.stdin.write "foo\r\n"
+            , 100
+
           it "transforms the values correctly", ->
             expect(@arg).to.eql ["-e ENV1=input", "-e ENV2=val2"]
