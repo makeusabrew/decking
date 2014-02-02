@@ -1,5 +1,8 @@
-expect = require("chai").expect
-sinon = require "sinon"
+chai   = require "chai"
+expect = chai.expect
+sinon  = require "sinon"
+
+chai.use require("sinon-chai")
 
 Decking = require "../src/decking"
 
@@ -87,3 +90,13 @@ describe "Instance methods", ->
 
         it "should invoke the help method", ->
           expect(@stub).to.have.been.called
+
+    describe "with an unknown command", ->
+      beforeEach ->
+        try
+          @execute "foo"
+        catch e
+          @e = e
+
+      it "throws the expected error", ->
+        expect(@e.message).to.eql "Unknown method foo"
