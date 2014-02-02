@@ -20,7 +20,7 @@
       <div class="inner">
         <h1>decking</h1>
         <h2>Create, manage and run clusters of Docker containers</h2>
-        <a href="https://github.com/makeusabrew/decking" class="button"><small>View project on</small>GitHub</a>
+        <a href="https://github.com/makeusabrew/decking" class="button"><small>View project on </small>GitHub</a>
       </div>
     </header>
 
@@ -38,8 +38,12 @@ of decking in action or check out a simple
 <a href="https://github.com/makeusabrew/nodeflakes/blob/master/decking.json">decking.json</a>
 example file.</p>
 
+<!--
+<iframe src="http://showterm.io/21bc0f5d5ddbe4a1c4f2a#fast" width="100%" height="480"></iframe>
+-->
+
 <h2>
-<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+<a name="installation" class="anchor"><span class="octicon octicon-link"></span></a>Installation</h2>
 
 <p>Although under heavy development, the more recent releases on npm are stable:</p>
 
@@ -49,7 +53,7 @@ example file.</p>
 need CoffeeScript installed globally in order to use the development version.</p>
 
 <p>Once installed decking can be run (without arguments) from anywhere:</p>
-<pre>$ <b>decking</b>
+<pre class="reduced reduced--alot">$ <b>decking</b>
 
 Usage: decking COMMAND [arg...]
 
@@ -68,9 +72,20 @@ Version: 0.0.12</pre>
 by a local <b>decking.json</b> file.</p>
 
 <h2>
-<a name="about" class="anchor" href="#about"><span class="octicon octicon-link"></span></a>Why decking?</h2>
+<a name="about" class="anchor"><span class="octicon octicon-link"></span></a>Why decking?</h2>
 
 <!--<p>Possible note here about lack of metadata storage with Docker</p>-->
+<p>Whilst <a href="http://www.docker.io/">Docker</a> is fantastic, it lacks
+any way of associating valuable metadata with images or containers. A Dockerfile
+can&rsquo;t enforce that it be built as a certain image name. More importantly, an
+image can&rsquo;t enforce that it be created with certain runtime values when
+creating a specific type of container. Docker provides flexible, abstract
+building blocks. Decking transforms these building blocks into
+concrete implementations of services&mdash;and clusters of services&mdash;in a
+robust, repeatable, configuration-driven manner. It allows simple but powerful
+dependency modelling and takes all the hassle (and error) out of starting
+clusters of containers in the correct dependency order. It allows optional
+overrides to fine-tune cluster configuration on a per-environment basis.
 
 <p>It simplifies the <b>building of images</b> based on local Dockerfiles which
 can ordinarily be a time-consuming and error prone process (building the wrong
@@ -91,7 +106,7 @@ with a single command, without having to worry about (re)starting them in
 dependency order.</p>
 
 <h2>
-<a name="deckingjson-format" class="anchor" href="#deckingjson-format"><span class="octicon octicon-link"></span></a>The decking.json file format</h2>
+<a name="format" class="anchor"><span class="octicon octicon-link"></span></a>The decking.json file format</h2>
 
 <p>The decking.json format aims to be clear, concise and simple. Note that the file
 must be present in the current working directory; decking will not recurse up parent
@@ -104,7 +119,7 @@ directories looking for a valid definition file. The top-level keys are:</p>
 </code></pre>
 
 <h3>
-<a name="images-object" class="anchor" href="#images-object"><span class="octicon octicon-link"></span></a>images</h3>
+<a name="format-images" class="anchor"><span class="octicon octicon-link"></span></a>images</h3>
 
 <p>Images define the templates from which containers are built; decking gives them
 a boost by being able to build them in batches and resolving commonly experienced issues with
@@ -133,7 +148,7 @@ of your project (i.e. to the same directory as your decking.json file) such
 that any <code>ADD</code> directives will be relative to your project root.</p>
 
 <h3>
-<a name="containers" class="anchor" href="#containers"><span class="octicon octicon-link"></span></a>containers</h3>
+<a name="format-containers" class="anchor"><span class="octicon octicon-link"></span></a>containers</h3>
 
 <p>Containers define the runtime configuration for a given image. They let you
 model instances&mdash;and crucially, their dependencies&mdash;in a clear, clean
@@ -182,10 +197,13 @@ image        &ndash; supplied as-is as the last part of the run command</pre>
 current value of the host machine&rsquo;s <code>$ANOTHER_VAR</code> environment
 variable. If that yields an empty value the user will be prompted for it. You
 will only be prompted for any missing environment variables when calling
-<code>decking create &lt;cluster&gt;</code>.</p>
+<code>decking create &lt;cluster&gt;</code>. This is particularly useful
+if you don&rsquo;t want to store sensitive information in your configuration
+file (such as API keys) or the relevant variable differs per host (such
+as a lookup of the host&rsquo;s IP address).</p>
 
 <h3>
-<a name="clusters" class="anchor" href="#clusters"><span class="octicon octicon-link"></span></a>clusters</h3>
+<a name="format-clusters" class="anchor"><span class="octicon octicon-link"></span></a>clusters</h3>
 
 <p>Clusters define sets of related containers which&mdash;presumably&mdash;combine
 in some useful way (e.g. a master &amp; slave database, a couple of web servers
@@ -222,7 +240,7 @@ then a cluster name must always be provided as otherwise decking won&rsquo;t
 know which one you&rsquo;re refering to.</p>
 
 <h3>
-<a name="groups-optional-object" class="anchor" href="#groups-optional-object"><span class="octicon octicon-link"></span></a>groups</h3>
+<a name="format-groups" class="anchor"><span class="octicon octicon-link"></span></a>groups</h3>
 
 <p>Groups allow clusters of containers to be run with different parameters, usually
 to support small configuration variations across different environments (e.g.
@@ -281,16 +299,25 @@ options are merged properly in a predictable manner.</p>
         </section>
 
         <aside id="sidebar">
-          <a href="https://github.com/makeusabrew/decking/zipball/master" class="button">
-            <small>Download</small>
-            .zip file
-          </a>
-          <a href="https://github.com/makeusabrew/decking/tarball/master" class="button">
-            <small>Download</small>
-            .tar.gz file
+          <a href="https://npmjs.org/package/decking" class="button">
+            <small>Download via npm</small>
+            0.0.12
           </a>
 
           <p class="repo-owner"><a href="https://github.com/makeusabrew/decking">decking</a> is maintained by <a href="https://github.com/makeusabrew">makeusabrew</a>.</p>
+
+          <ul>
+            <li><a href=#installation>Installation</a></li>
+            <li><a href=#about>Why decking?</a></li>
+            <li><a href=#format>decking.json format</a>
+              <ul>
+                <li><a href="#format-images">images</a></li>
+                <li><a href="#format-containers">containers</a></li>
+                <li><a href="#format-clusters">clusters</a></li>
+                <li><a href="#format-groups">groups</a></li>
+              </ul>
+            </li>
+          </ul>
 
           <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
         </aside>

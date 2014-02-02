@@ -383,6 +383,10 @@ pre.reduced {
     margin-bottom:15px;
 }
 
+.reduced--alot {
+    font-size:75%;
+}
+
 .requirements {
     font-size:0.8em;
     margin-bottom:10px;
