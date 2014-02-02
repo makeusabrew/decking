@@ -65,10 +65,9 @@ Commands:
   restart  restart a cluster
   status   check the status of a cluster's containers
   attach   attach to all running containers in a cluster
+</pre>
 
-Version: 0.0.12</pre>
-
-<p>These commands only make sense with some context; that context must be provided
+<p>These commands only make sense with some context&mdash;provided
 by a local <b>decking.json</b> file.</p>
 
 <h2>
@@ -296,6 +295,63 @@ rather than merge them with existing ones. Likewise, a container-level override 
 any previous values (even those set at group level). This will be changed in future such that
 options are merged properly in a predictable manner.</p>
 
+<h2>
+<a name="commands" class="anchor"><span class="octicon octicon-link"></span></a>Commands</h2>
+
+<p>Every command relates to the orchestration of containers into clusters with one
+exception&mdash;build&mdash;which relates to the base images powering each container.</p>
+
+<h3>
+<a name="commands-build" class="anchor"><span class="octicon octicon-link"></span></a>build [image]</h3>
+
+<p>When provided with a valid image name found in the decking definition file, this copies the
+referenced Dockerfile to the project root before building it.</p>
+
+<p>When provided with the literal string &lsquo;all&rsquo; this simply iterates through each key
+of the images object and builds them in turn.</p>
+
+<h3>
+<a name="commands-create" class="anchor"><span class="octicon octicon-link"></span></a>create [cluster]</h3>
+
+<p>Builds containers for a given cluster as well as any implicit or explicit dependencies. Optionally
+uses group-level overrides if specified by the cluster definition. This method is safe to run multiple
+times; it will only create the containers in the cluster which don&rsquo;t already exist.</p>
+
+<h3>
+<a name="commands-start" class="anchor"><span class="octicon octicon-link"></span></a>start [cluster]</h3>
+
+<p>Starts all the containers in a given cluster. Safe to run multiple times; it
+will only start containers which aren&rsquo;t already running. Ensures that any
+dependencies are always started before their dependent services.</p>
+
+<h3>
+<a name="commands-stop" class="anchor"><span class="octicon octicon-link"></span></a>stop [cluster]</h3>
+
+<p>Stops all the containers in a given cluster. Safe to run multiple times; it
+will only stop containers which are currently running.</p>
+
+<h3>
+<a name="commands-restart" class="anchor"><span class="octicon octicon-link"></span></a>restart [cluster]</h3>
+
+<p>Restarts the containers in a given cluster. As with <code>start</code>,
+all dependencies are restarted in the correct order.</p>
+
+<h3>
+<a name="commands-status" class="anchor"><span class="octicon octicon-link"></span></a>status [cluster]</h3>
+
+<p>Provides a quick overview of the status of each container in a cluster.
+Also displays each container&rsquo;s IP and port mapping information if
+it is currently running.</p>
+
+<h3>
+<a name="commands-attach" class="anchor"><span class="octicon octicon-link"></span></a>attach [cluster]</h3>
+
+<p>Attaches to the stdout and stderr streams of each container in a cluster.
+This is <i>incredibly</i> useful for gaining an insight into the overall
+cohesion of a cluster and provides a coordinated output log. Survives
+brief outages in container availibility meaning it does not have to be
+re run each time a container is restarted.</p>
+
         </section>
 
         <aside id="sidebar">
@@ -309,12 +365,22 @@ options are merged properly in a predictable manner.</p>
           <ul>
             <li><a href=#installation>Installation</a></li>
             <li><a href=#about>Why decking?</a></li>
-            <li><a href=#format>decking.json format</a>
-              <ul>
+            <li><a href=#format>The decking.json format</a>
+              <ul class="nested">
                 <li><a href="#format-images">images</a></li>
                 <li><a href="#format-containers">containers</a></li>
                 <li><a href="#format-clusters">clusters</a></li>
                 <li><a href="#format-groups">groups</a></li>
+              </ul>
+            </li>
+            <li><a href=#commands>Commands</a>
+              <ul class="nested">
+                <li><a href="#commands-build">build</a></li>
+                <li><a href="#commands-create">create</a></li>
+                <li><a href="#commands-start">start</a></li>
+                <li><a href="#commands-stop">stop</a></li>
+                <li><a href="#commands-restart">restart</a></li>
+                <li><a href="#commands-attach">attach</a></li>
               </ul>
             </li>
           </ul>

@@ -396,6 +396,9 @@ pre.reduced {
     font-size:0.85em;
 }
 
+.nested {
+    margin-bottom:0;
+}
 
 /* #Media Queries
 ================================================== */
