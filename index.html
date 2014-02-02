@@ -169,7 +169,7 @@ both approaches might look a bit like this:</p>
   "nfprocessor": {
     "image": "makeusabrew/nodeflakes-processor",
     "port" : ["1234:1234"],
-    "env": : ["MY_ENV_VAR=value", "ANOTHER_VAR=-"]
+    "env": : ["MY_ENV_VAR=value", "ANOTHER_VAR=foo"]
     "dependencies": [
       "nfconsumer:consumer"
     ],
@@ -188,18 +188,6 @@ mount        &rarr; <b>-v</b>
 image        &ndash; supplied as-is as the last part of the run command</pre>
 
 <!--<p>It might be simpler to remove this abstraction and just name these keys exactly as per the arguments passed to docker run, but you&rsquo;d end up with some pretty ugly looking definitions full of single letter keys. Nevertheless, this <em>may</em> change.</p>-->
-
-<h4>Dynamic values</h4>
-
-<p>Notice that our env var <code>ANOTHER_VAR</code> is defined simply as
-<code>-</code>. This is a special value which will be substituted with the
-current value of the host machine&rsquo;s <code>$ANOTHER_VAR</code> environment
-variable. If that yields an empty value the user will be prompted for it. You
-will only be prompted for any missing environment variables when calling
-<code>decking create &lt;cluster&gt;</code>. This is particularly useful
-if you don&rsquo;t want to store sensitive information in your configuration
-file (such as API keys) or the relevant variable differs per host (such
-as a lookup of the host&rsquo;s IP address).</p>
 
 <h3>
 <a name="format-clusters" class="anchor"><span class="octicon octicon-link"></span></a>clusters</h3>
@@ -352,6 +340,100 @@ cohesion of a cluster and provides a coordinated output log. Survives
 brief outages in container availibility meaning it does not have to be
 re run each time a container is restarted.</p>
 
+<h2>
+<a name="advanced-usage" class="anchor"><span class="octicon octicon-link"></span></a>Advanced Usage</h2>
+
+<p>While the basic decking configuration is simple yet powerful,
+occasionally you may need to use some more advanced configuration techniques:</p>
+
+<h3>
+<a name="advanced-dynamic" class="anchor"><span class="octicon octicon-link"></span></a>Dynamic environment variables</h3>
+
+<p>Environment variables are often used for information you
+wouldn&rsquo;t want commiting to source control; either because it is
+sensitive (e.g. a secret API token) or unpredictable (e.g. something which
+varies per host, such as the host&rsquo;s IP address). Decking allows
+you to specify a dash value (literally, a <code>-</code>) for
+environment variables which it will try to resolve when creating a
+container. Let&rsquo;s look at a very simple example first:</p>
+
+<pre><code>"containers": {
+  "api_consumer": {
+    "image": "makeusabrew/twitter-consumer",
+    "env": : ["NODE_ENV=build", "CONSUMER_KEY=-"]
+  }
+}</code></pre>
+
+<p>When a cluster containing this container is first created, decking will
+notice the dash value and check the host machine&rsquo;s
+<code>$ANOTHER_VAR</code> environment variable. If that yields an empty value
+the user will be prompted for it; the user&rsquo;s input will be masked in
+case the data is sensitive. As Docker stores environment variables as
+part of a container&rsquo;s configuration, this information will only
+be prompted for once, upon container creation. The value stored by the
+container is a snapshot; it does not change when the container is stopped
+or started.</p>
+
+<h3>
+<a name="advanced-multi" class="anchor"><span class="octicon octicon-link"></span></a>Multiple instances of the same container in a cluster</h3>
+
+<p>It is not uncommon to have multiple instances of a service working together
+as part of a cluster (e.g. a group of workers which listen out for data before
+processing it). Since these cases are effectively just &gt; 1 instance of
+the same container, there is no need to provide a separate container definition
+for each node. Let&rsquo;s take a look at another example based on our previous
+API consumer:</p>
+
+<pre><code>"containers": {
+  "api_consumer": {
+    "image": "makeusabrew/twitter-consumer",
+    "env": : ["NODE_ENV=build", "CONSUMER_KEY=-"]
+  },
+  "data_processor": {
+    "image": "makeusabrew/twitter-processor",
+    "dependencies": ["redis"]
+  }
+}</code></pre>
+
+<p>(We&rsquo;ve snuck in a dependency on a &lsquo;redis&rsquo; container
+here since our processors are probably going to pump data into it, but
+it&rsquo;s not relevant to the example!)</p>
+
+<p>Let&rsquo;s say in build mode we only want one data processor; we&rsquo;d
+just define our cluster definition as usual:</p>
+
+<pre><code>"clusters": {
+  "build": ["api_consumer", "data_processor"]
+}
+</code></pre>
+
+<p>But in production we want more data processors to take full advantage of
+our server:</p>
+
+<pre><code>"clusters": {
+  "build": ["api_consumer", "data_processor"],
+  "prod": ["api_consumer", "data_processor(8)"]
+}
+</code></pre>
+
+<p>Voila; a call to <code>decking start prod</code> will now spawn eight
+instances of our data processor!</p>
+
+<p>Note that multi-node containers will be named accordingly. Our build
+data processor would simply be called <code>data_processor.build</code>
+whereas our production containers would be named
+<code>data_processor.prod.1</code> &hellip; <code>data_processor.prod.8</code>
+to avoid clashing with each other.</p>
+
+<p>There is one outstanding issue with multi-node containers; since they
+all use the same container definition there is a problem if that definition
+specifies something which should vary per container instance. A concrete
+example of this would be a web node which binds to a specific port on
+the host; docker will error when trying to bind another container to that
+port (in this scenario don&rsquo;t bind to a specific host port&mdash;use
+a load balancer and links instead!). This will be addressed in a future
+release.</p>
+
         </section>
 
         <aside id="sidebar">
@@ -381,6 +463,12 @@ re run each time a container is restarted.</p>
                 <li><a href="#commands-stop">stop</a></li>
                 <li><a href="#commands-restart">restart</a></li>
                 <li><a href="#commands-attach">attach</a></li>
+              </ul>
+            </li>
+            <li><a href=#advanced-usage>Advanced usage</a>
+              <ul class="nested">
+                <li><a href="#advanced-dynamic">Dynamic env vars</a></li>
+                <li><a href="#advanced-multi">Multi-node containers</a></li>
               </ul>
             </li>
           </ul>
