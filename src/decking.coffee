@@ -2,11 +2,11 @@ fs            = require "fs"
 child_process = require "child_process"
 async         = require "async"
 DepTree       = require "deptree"
-read          = require "read"
 Docker        = require "dockerode"
 JSONStream    = require "JSONStream"
 
 Parser = require "./parser"
+Runner = require "./runner"
 
 MultiplexStream = require "./multiplex_stream"
 
@@ -253,7 +253,7 @@ class Decking
           do (key, val) ->
             # run is going to be fed into async.series, it expects
             # to only fire a callback per iteration...
-            run.push (done) -> getRunArg key, val, details, done
+            run.push (done) -> Runner.getArg key, val, details, done
 
         # now we've got our array of getRunArg calls bound to the right
         # variables, run them in order and add the results to the initial
@@ -443,66 +443,6 @@ validateContainerPresence = (list, done) ->
     container.inspect callback
 
   async.eachSeries list, iterator, done
-
-getRunArg = (key, val, object, done) ->
-  arg = []
-
-  switch key
-    when "env"
-      # we need to loop through all the entries asynchronously
-      # because if we get an ENV_VAR=- format (the key being -) then
-      # we'll prompt for the value
-      iterator = (v, callback) ->
-        [key, value] = v.split "="
-
-        # first thing's first, try and substitute a real process.env value
-        if value is "-" then value = process.env[key]
-
-        # did we have one? great! bail early with the updated value
-        if value
-          arg = [].concat arg, ["-e #{key}=#{value}"]
-          return callback null
-
-        # if we got here we still don't have a value for this env var, so
-        # we need to ask the user for it
-        options =
-          prompt: "#{object.name} requires a value for the env var '#{key}':"
-          silent: true
-          replace: "*"
-
-        read options, (err, value) ->
-          arg = [].concat arg, ["-e #{key}=#{value}"]
-          return callback null
-
-      return async.eachSeries val, iterator, (err) -> done err, arg
-
-    when "dependencies"
-      for v,k in val
-        if object.group
-          v += ".#{object.group}"
-        # we trust that the aliases array has the correct matching indices
-        # here such that alias[k] is the correct alias for dependencies[k]
-        alias = object.aliases[k]
-        arg = [].concat arg, ["-link #{v}:#{alias}"]
-
-    when "port"
-      arg = [].concat arg, ["-p #{v}"] for v in val
-
-    when "privileged"
-      arg = ["-privileged"] if val
-
-    when "mount"
-      for v in val
-        [host, remote] = v.split ":"
-        matches = host.match /^\.(.*)$/
-        if matches
-          path = require "path"
-          host = path.join process.cwd(), matches[1]
-
-        host = process.cwd() if host is "."
-        arg = [].concat arg, ["-v #{host}:#{remote}"]
-
-  return done null, arg
 
 getCluster = (config, cluster) ->
   if not cluster
