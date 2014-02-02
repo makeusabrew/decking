@@ -1,7 +1,6 @@
 fs            = require "fs"
 child_process = require "child_process"
 async         = require "async"
-uuid          = require "node-uuid"
 DepTree       = require "deptree"
 read          = require "read"
 Docker        = require "dockerode"
@@ -17,7 +16,8 @@ version = require("#{__dirname}/../package.json").version
 
 module.exports =
 class Decking
-  constructor: ({@command, @args}) ->
+  constructor: ({@command, @args} = {}) ->
+    @args ?= []
     @config = {}
 
   processConfig: (config) ->
@@ -98,8 +98,8 @@ class Decking
 
       Commands:
         build    build an image or pass 'all' to build all
-        create   create a cluster
-        start    start a cluster of containers
+        create   create a cluster of containers
+        start    start a cluster
         stop     stop a cluster
         restart  restart a cluster
         status   check the status of a cluster's containers
