@@ -77,8 +77,8 @@ by a local <b>decking.json</b> file.</p>
 <p>Whilst <a href="http://www.docker.io/">Docker</a> is fantastic, it lacks
 any way of associating valuable metadata with images or containers. A Dockerfile
 can&rsquo;t enforce that it be built as a certain image name. More importantly, an
-image can&rsquo;t enforce that it be created with certain runtime values when
-creating a specific type of container. Docker provides flexible, abstract
+image can&rsquo;t enforce that it be invoked with certain runtime values when
+it is used to create a container. Docker provides flexible, abstract
 building blocks. Decking transforms these building blocks into
 concrete implementations of services&mdash;and clusters of services&mdash;in a
 robust, repeatable, configuration-driven manner. It allows simple but powerful
@@ -150,7 +150,7 @@ that any <code>ADD</code> directives will be relative to your project root.</p>
 <a name="format-containers" class="anchor"><span class="octicon octicon-link"></span></a>containers</h3>
 
 <p>Containers define the runtime configuration for a given image. They let you
-model instances&mdash;and crucially, their dependencies&mdash;in a clear, clean
+model services&mdash;and crucially, their dependencies&mdash;in a clear, clean
 and repeatable manner, meaning you don&rsquo;t have to remember all those arguments
 when creating a new container.</p>
 
