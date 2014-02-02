@@ -73,7 +73,21 @@ class Decking
 
   _run: (cmd, done) ->
     [cluster] = @args
-    target = getCluster @config, cluster
+
+    if not cluster
+      throw new Error "Please supply a cluster name" if Object.keys(@config.clusters).length isnt 1
+
+      # no cluster specified, but there's only one, so just default to it
+      cluster = key for key of @config.clusters
+      log "Defaulting to cluster '#{cluster}'"
+
+    target = @config.clusters[cluster]
+
+    throw new Error "Cluster #{cluster} does not exist in decking.json"  if not target
+
+    if target.group
+      log "Using overrides from group '#{target.group}'\n"
+
     this[cmd](target, done)
 
   start: (cluster, done) ->
@@ -443,23 +457,6 @@ validateContainerPresence = (list, done) ->
     container.inspect callback
 
   async.eachSeries list, iterator, done
-
-getCluster = (config, cluster) ->
-  if not cluster
-    throw new Error "Please supply a cluster name" if Object.keys(config.clusters).length isnt 1
-
-    # no cluster specified, but there's only one, so just default to it
-    cluster = key for key of config.clusters
-    log "Defaulting to cluster '#{cluster}'"
-
-  target = config.clusters[cluster]
-
-  throw new Error "Cluster #{cluster} does not exist in decking.json"  if not target
-
-  if target.group
-    log "Using overrides from group '#{target.group}'\n"
-
-  return target
 
 isRunning = (container, callback) ->
   container.inspect (err, data) ->
