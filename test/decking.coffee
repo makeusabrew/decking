@@ -1,14 +1,13 @@
 chai   = require "chai"
 expect = chai.expect
 sinon  = require "sinon"
-
 chai.use require("sinon-chai")
 
 Decking = require "../src/decking"
 
 describe "Decking", ->
   it "is a function", ->
-    expect(Decking).to.be.a.function
+    expect(Decking).to.be.a "function"
 
   describe "When invoked", ->
     describe "Without any options", ->
