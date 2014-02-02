@@ -1,16 +1,18 @@
 #!/usr/bin/env node
-var Decking, colors, d, domain, options;
+var Decking, colors, d, decking, domain, options;
 
 domain = require("domain");
 
 colors = require("colors");
 
-Decking = require("../index");
+Decking = require("../index.coffee");
 
 options = {
   command: process.argv[2],
   args: process.argv.slice(3)
 };
+
+decking = new Decking(options);
 
 d = domain.create();
 
@@ -20,8 +22,6 @@ d.on("error", function(e) {
 
 d.run(function() {
   return setImmediate(function() {
-    var decking;
-    decking = new Decking(options);
     return decking.execute();
   });
 });
