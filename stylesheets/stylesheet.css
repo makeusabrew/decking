@@ -380,6 +380,7 @@ em,i {
 pre.reduced {
     padding:5px;
     border:0;
+    margin-bottom:15px;
 }
 
 .requirements {

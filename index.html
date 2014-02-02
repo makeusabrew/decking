@@ -18,7 +18,7 @@
   <body>
     <header>
       <div class="inner">
-        <h1>decking.io</h1>
+        <h1>decking</h1>
         <h2>Create, manage and run clusters of Docker containers</h2>
         <a href="https://github.com/makeusabrew/decking" class="button"><small>View project on</small>GitHub</a>
       </div>
@@ -46,7 +46,7 @@ example file.</p>
 <pre class="reduced">$ [sudo] <b>npm install -g decking</b></pre>
 
 <p>Alternatively, just clone the repo and run <code>./bin/decking</code>. You&rsquo;ll
-need CoffeeScript installed globally in order for this to work.</p>
+need CoffeeScript installed globally in order to use the development version.</p>
 
 <p>Once installed decking can be run (without arguments) from anywhere:</p>
 <pre>$ <b>decking</b>
@@ -68,19 +68,27 @@ Version: 0.0.12</pre>
 by a local <b>decking.json</b> file.</p>
 
 <h2>
-<a name="about" class="anchor" href="#about"><span class="octicon octicon-link"></span></a>Why?</h2>
+<a name="about" class="anchor" href="#about"><span class="octicon octicon-link"></span></a>Why decking?</h2>
 
-<p>Decking simplifies the <b>building of images</b> based on local Dockerfiles which can ordinarily be a time-consuming and error prone process (building the wrong Dockerfile as the wrong image, and having to move the Dockerfile to the root of a project in order to make the <code>ADD</code> directive work properly).</p>
+<!--<p>Possible note here about lack of metadata storage with Docker</p>-->
 
-<p>It simplifies the <b>creation of containers</b> by considering <code>docker run</code> parameters to be part of the definition of each
-container - again meaning less room for error as each developer doesn't have to remember the correct run time parameters to use when creating each container.</p>
+<p>It simplifies the <b>building of images</b> based on local Dockerfiles which
+can ordinarily be a time-consuming and error prone process (building the wrong
+Dockerfile as the wrong image, and having to move the Dockerfile to the root of
+a project in order to make the <code>ADD</code> directive work properly).</p>
 
-<p>It simplifies the <b>running of containers</b> by allowing dependencies to be specified, ensuring that all containers forming
-part of a cluster are started in the correct order such that <code>-link</code> parameters work as expected. Entire clusters of containers can be started, stopped or attached to with a single command, without having to worry about restarting them in dependency order.</p>
+<p>It simplifies the <b>creation of containers</b> by considering
+<code>docker run</code> parameters to be part of the definition of each
+container, meaning less room for error as each developer doesn&rsquo;t have
+to remember the correct runtime parameters to use when creating each
+container.</p>
 
-<!--<p>It intends to use the Docker Remote API wherever possible (not everywhere, does
-not appear to support <code>-name</code> and <code>-link</code> flags yet).</p>-->
-
+<p>It simplifies the <b>orchestration of containers</b> by allowing dependencies
+to be specified, ensuring that all containers forming part of a cluster are
+started in the correct order such that <code>-link</code> parameters work as
+expected. Entire clusters of containers can be started, stopped or attached to
+with a single command, without having to worry about (re)starting them in
+dependency order.</p>
 
 <h2>
 <a name="deckingjson-format" class="anchor" href="#deckingjson-format"><span class="octicon octicon-link"></span></a>The decking.json file format</h2>
@@ -98,9 +106,9 @@ directories looking for a valid definition file. The top-level keys are:</p>
 <h3>
 <a name="images-object" class="anchor" href="#images-object"><span class="octicon octicon-link"></span></a>images</h3>
 
-<p>Docker images define the templates from which containers are built; decking gives them
-a boost by being able to build them in batches and resolving commonly encountered
-&lsquo;context&rsquo; difficulties:</p>
+<p>Images define the templates from which containers are built; decking gives them
+a boost by being able to build them in batches and resolving commonly experienced issues with
+Docker&rsquo;s &lsquo;context&rsquo; restrictions.</p>
 
 <ul class="requirements">
   <li>required: <b>no</b></li>
@@ -109,7 +117,7 @@ a boost by being able to build them in batches and resolving commonly encountere
 
 <p>Each key is the name of the image you want to build. Each value is the location of
 the <em>local</em> Dockerfile relative to the project root. Only local images
-can be built at the moment, although eventually you'll be able to specify tag names
+can be built at the moment, although eventually you&rsquo;ll be able to specify tag names
 as values in to build an image from the Docker Index instead.</p>
 
 <pre><code>"images": {
@@ -139,8 +147,8 @@ when creating a new container.</p>
 
 <p>Keys are the names you want to run your containers as (e.g.
 <code>docker run -name &lt;key&gt; ...</code>). Values are either
-a string&mdash;in which case they must refer to a valid <code>images</code>
-key&mdash;or an object. A definition of two containers demonstrating
+a string&mdash;in which case they are assumed to refer to an image&mdash;or an
+object. A definition of two containers demonstrating
 both approaches might look a bit like this:</p>
 
 <pre><code>"containers": {
@@ -165,17 +173,16 @@ dependencies &rarr; <b>-link</b>
 mount        &rarr; <b>-v</b>
 image        &ndash; supplied as-is as the last part of the run command</pre>
 
-<!--<p>It might be simpler to remove this abstraction and just name these keys exactly as per the arguments passed to docker run, but you'd end up with some pretty ugly looking definitions full of single letter keys. Nevertheless, this <em>may</em> change.</p>-->
+<!--<p>It might be simpler to remove this abstraction and just name these keys exactly as per the arguments passed to docker run, but you&rsquo;d end up with some pretty ugly looking definitions full of single letter keys. Nevertheless, this <em>may</em> change.</p>-->
+
+<h4>Dynamic values</h4>
 
 <p>Notice that our env var <code>ANOTHER_VAR</code> is defined simply as
-<code>-</code>. This is a special value which, when the container is first created,
-will be substituted with the current value of
-<code>process.env['ANOTHER_VAR']</code>. If that yields a falsy value the user
-will be prompted for it. You will only be prompted for any missing environment
-variables when calling <code>decking create &lt;cluster&gt;</code>. Of course,
-if you manually <code>docker rm</code> a container used in the cluster and then
-call <code>decking create &lt;cluster&gt;</code> again you will be prompted for
-the value once more.</p>
+<code>-</code>. This is a special value which will be substituted with the
+current value of the host machine&rsquo;s <code>$ANOTHER_VAR</code> environment
+variable. If that yields an empty value the user will be prompted for it. You
+will only be prompted for any missing environment variables when calling
+<code>decking create &lt;cluster&gt;</code>.</p>
 
 <h3>
 <a name="clusters" class="anchor" href="#clusters"><span class="octicon octicon-link"></span></a>clusters</h3>
@@ -190,7 +197,7 @@ and a load balancer). This is where it all happens!
 </ul>
 
 <p>Keys are the names of clusters you want to refer to, values are usually
-just arrays of keys found in the <code>containers</code> object. These
+just arrays of names found in the <code>containers</code> object. These
 definitions are simple as most of the configuration has already been done
 elsewhere:</p>
 
@@ -200,28 +207,33 @@ elsewhere:</p>
 </code></pre>
 
 <p>The order we list our containers as part of each cluster definition
-doesn't matter - decking will resolve the dependencies based on each
-container's definition and make sure they start in the correct order.</p>
+doesn&rsquo;t matter&mdash;decking will resolve the dependencies based on each
+container&rsquo;s definition and make sure they start in the correct order.
+Similarly, dependencies don&rsquo;t <i>have</i> to be explicitly listed as part
+of a cluster; if you want to run containers A and B as a cluster, and B
+happens to depend on C, then C will be started too&mdash;even if you aren&rsquo;t
+really interested in it when mentally modelling your cluster.</p>
 
-<p>As we have only defined one cluster we can omit it when calling any
-of the cluster related commands &ndash; e.g.
+<p>In this example as we have only defined one cluster we can omit it when
+calling any of the cluster related commands &ndash; e.g.
 <code>decking start main</code> can be shortened to
 <code>decking start</code>. If two or more cluster definitions are present
-then a cluster name must always be provided.</p>
+then a cluster name must always be provided as otherwise decking won&rsquo;t
+know which one you&rsquo;re refering to.</p>
 
 <h3>
 <a name="groups-optional-object" class="anchor" href="#groups-optional-object"><span class="octicon octicon-link"></span></a>groups</h3>
 
 <p>Groups allow clusters of containers to be run with different parameters, usually
 to support small configuration variations across different environments (e.g.
-build, test, production).</p>
+build, test, production) without having to define entirely new containers.</p>
 
 <ul class="requirements">
   <li>required: <b>no</b></li>
   <li>type: <b>object</b></li>
 </ul>
 
-<p>Keys are the names of cluster definitions to override, values are
+<p>Keys are arbitrary names to associate with each group, values are
 cluster-wide and container-specific overrides:</p>
 
 <pre><code>"groups": {
@@ -255,7 +267,7 @@ into a group simply requires a slightly different cluster definition:</p>
 </code></pre>
 
 <p>This would let us run two clusters based on the same containers, albeit one very clearly in
-&lsquo;build&rsquo; mode. Of course we can't have two containers with different configurations sharing
+&lsquo;build&rsquo; mode. Of course we can&rsquo;t have two containers with different configurations sharing
 the same <code>-name</code>, so decking namespaces containers based on the group name. In the above example,
 a call to <code>decking create dev</code> would look for containers named <code>nfprocessor.build</code> and
 <code>nfconsumer.build</code>. This namespacing is transparent to a user, meaning containers can always
