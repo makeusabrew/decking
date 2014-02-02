@@ -64,11 +64,9 @@ module.exports =
         matches = container.name.match(/(.+)\((\d+)\)$/)
         [_, container.name, container.count] = matches if matches
 
-        containerLookup = config.containers[container.name]
+        container.object = config.containers[container.name]
 
-        if not containerLookup
-          throw new Error("Container #{container.name} does not exist")
-
-        container.object = containerLookup
+        if not container.object
+          throw new Error "Container #{container.name} does not exist"
 
     return config
