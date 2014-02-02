@@ -100,3 +100,13 @@ describe "Instance methods", ->
 
       it "throws the expected error", ->
         expect(@e.message).to.eql "Unknown method foo"
+
+    describe "with no local decking.json file", ->
+      beforeEach ->
+        try
+          @execute "create"
+        catch e
+          @e = e
+
+      it "throws the expected error", ->
+        expect(@e.message).to.eql "ENOENT, no such file or directory './decking.json'"
