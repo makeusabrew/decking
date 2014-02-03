@@ -29,7 +29,7 @@
         <section id="main-content">
           <!--<h1> <span class="octicon octicon-link"></span>Simplified management for clusters of Docker containers</h1>-->
 
-<p>Decking aims to simplify the creation, management and running of clusters
+<p>Decking aims to simplify the creation, organsation and running of clusters
 of Docker containers in a way which is familiar to developers;
 by reading information from a <code>decking.json</code> package file
 on a project by project basis. You can view a
@@ -74,7 +74,7 @@ by a local <b>decking.json</b> file.</p>
 <a name="about" class="anchor"><span class="octicon octicon-link"></span></a>Why decking?</h2>
 
 <!--<p>Possible note here about lack of metadata storage with Docker</p>-->
-<p>Whilst <a href="http://www.docker.io/">Docker</a> is fantastic, it lacks
+<p>While <a href="http://www.docker.io/">Docker</a> is fantastic, it lacks
 any way of associating valuable metadata with images or containers. A Dockerfile
 can&rsquo;t enforce that it be built as a certain image name. More importantly, an
 image can&rsquo;t enforce that it be invoked with certain runtime values when
@@ -89,7 +89,7 @@ overrides to fine-tune cluster configuration on a per-environment basis.
 <p>It simplifies the <b>building of images</b> based on local Dockerfiles which
 can ordinarily be a time-consuming and error prone process (building the wrong
 Dockerfile as the wrong image, and having to move the Dockerfile to the root of
-a project in order to make the <code>ADD</code> directive work properly).</p>
+a project in order to make the <code>ADD</code> directive work smoothly).</p>
 
 <p>It simplifies the <b>creation of containers</b> by considering
 <code>docker run</code> parameters to be part of the definition of each
@@ -120,14 +120,13 @@ directories looking for a valid definition file. The top-level keys are:</p>
 <h3>
 <a name="format-images" class="anchor"><span class="octicon octicon-link"></span></a>images</h3>
 
+<ul class="requirements">
+  <li>required: <b>no</b></li>
+</ul>
+
 <p>Images define the templates from which containers are built; decking gives them
 a boost by being able to build them in batches and resolving commonly experienced issues with
 Docker&rsquo;s &lsquo;context&rsquo; restrictions.</p>
-
-<ul class="requirements">
-  <li>required: <b>no</b></li>
-  <li>type: <b>object</b></li>
-</ul>
 
 <p>Each key is the name of the image you want to build. Each value is the location of
 the <em>local</em> Dockerfile relative to the project root. Only local images
@@ -149,17 +148,16 @@ that any <code>ADD</code> directives will be relative to your project root.</p>
 <h3>
 <a name="format-containers" class="anchor"><span class="octicon octicon-link"></span></a>containers</h3>
 
+<ul class="requirements">
+  <li>required: <b>yes</b></li>
+</ul>
+
 <p>Containers define the runtime configuration for a given image. They let you
 model services&mdash;and crucially, their dependencies&mdash;in a clear, clean
 and repeatable manner, meaning you don&rsquo;t have to remember all those arguments
 when creating a new container.</p>
 
-<ul class="requirements">
-  <li>required: <b>yes</b></li>
-  <li>type: <b>object</b></li>
-</ul>
-
-<p>Keys are the names you want to run your containers as (e.g.
+<p>Each key is the name you want to assign to the container (i.e.
 <code>docker run -name &lt;key&gt; ...</code>). Values are either
 a string&mdash;in which case they are assumed to refer to an image&mdash;or an
 object. A definition of two containers demonstrating
@@ -179,29 +177,32 @@ both approaches might look a bit like this:</p>
 }
 </code></pre>
 
-<p>Each key in the definition of <code>nfprocessor</code> maps loosely onto an argument which will be passed to <code>docker run</code>:</p>
+<p>Each key in the definition of <code>nfprocessor</code> maps loosely onto
+an argument which will be passed to <code>docker run</code>. The currently
+supported options are:</p>
 
-<pre class="reduced">port         &rarr; <b>-p</b>
+<pre class="">port         &rarr; <b>-p</b>
 env          &rarr; <b>-e</b>
 dependencies &rarr; <b>-link</b>
 mount        &rarr; <b>-v</b>
-image        &ndash; supplied as-is as the last part of the run command</pre>
+privileged   &rarr; <b>-privileged</b>
+image        &rarr; supplied as-is as the last part of the run command</pre>
 
 <!--<p>It might be simpler to remove this abstraction and just name these keys exactly as per the arguments passed to docker run, but you&rsquo;d end up with some pretty ugly looking definitions full of single letter keys. Nevertheless, this <em>may</em> change.</p>-->
 
 <h3>
 <a name="format-clusters" class="anchor"><span class="octicon octicon-link"></span></a>clusters</h3>
 
+<ul class="requirements">
+  <li>required: <b>yes</b></li>
+</ul>
+
 <p>Clusters define sets of related containers which&mdash;presumably&mdash;combine
 in some useful way (e.g. a master &amp; slave database, a couple of web servers
 and a load balancer). This is where it all happens!
 
-<ul class="requirements">
-  <li>required: <b>yes</b></li>
-  <li>type: <b>object</b></li>
-</ul>
-
-<p>Keys are the names of clusters you want to refer to, values are usually
+<p>Each key is an arbitrary name to refer to the cluster by when using the
+cluster related commands. Values are usually
 just arrays of names found in the <code>containers</code> object. These
 definitions are simple as most of the configuration has already been done
 elsewhere:</p>
@@ -219,26 +220,27 @@ of a cluster; if you want to run containers A and B as a cluster, and B
 happens to depend on C, then C will be started too&mdash;even if you aren&rsquo;t
 really interested in it when mentally modelling your cluster.</p>
 
+<!--
 <p>In this example as we have only defined one cluster we can omit it when
 calling any of the cluster related commands &ndash; e.g.
 <code>decking start main</code> can be shortened to
 <code>decking start</code>. If two or more cluster definitions are present
 then a cluster name must always be provided as otherwise decking won&rsquo;t
 know which one you&rsquo;re refering to.</p>
+-->
 
 <h3>
 <a name="format-groups" class="anchor"><span class="octicon octicon-link"></span></a>groups</h3>
+
+<ul class="requirements">
+  <li>required: <b>no</b></li>
+</ul>
 
 <p>Groups allow clusters of containers to be run with different parameters, usually
 to support small configuration variations across different environments (e.g.
 build, test, production) without having to define entirely new containers.</p>
 
-<ul class="requirements">
-  <li>required: <b>no</b></li>
-  <li>type: <b>object</b></li>
-</ul>
-
-<p>Keys are arbitrary names to associate with each group, values are
+<p>Each key is an arbitrary name to associate with each group. Values are
 cluster-wide and container-specific overrides:</p>
 
 <pre><code>"groups": {
@@ -417,12 +419,12 @@ our server:</p>
 </code></pre>
 
 <p>Voila; a call to <code>decking start prod</code> will now spawn eight
-instances of our data processor!</p>
+instances of our data processor.</p>
 
-<p>Note that multi-node containers will be named accordingly. Our build
-data processor would simply be called <code>data_processor.build</code>
+<p>Note that multi-node containers will be named accordingly. Our
+data processor would simply be called <code>data_processor</code>
 whereas our production containers would be named
-<code>data_processor.prod.1</code> &hellip; <code>data_processor.prod.8</code>
+<code>data_processor.1</code> &hellip; <code>data_processor.8</code>
 to avoid clashing with each other.</p>
 
 <p>There is one outstanding issue with multi-node containers; since they
@@ -434,13 +436,74 @@ port (in this scenario don&rsquo;t bind to a specific host port&mdash;use
 a load balancer and links instead!). This will be addressed in a future
 release.</p>
 
+<h2>
+<a name="faq" class="anchor"><span class="octicon octicon-link"></span></a>Miscellaneous Notes</h2>
+
+<p>Some useful information which doesn't quite fit elsewhere&hellip;</p>
+
+<h3>
+<a name="faq-names" class="anchor"><span class="octicon octicon-link"></span></a>Container naming conventions</h3>
+
+<p>In general, containers will be named exactly as per their keys in the
+<a href="format-containers">containers</a> object. There are however some exceptions to this rule:</p>
+
+<ol>
+  <li>If a cluster specifies a <a href="#format-groups">group</a> override</li>
+  <li>If a cluster specifies a <a href="#advanced-multi">multi-instance</a> container</li>
+  <li>If a cluster specifies both 1 &amp; 2.</li>
+</ol>
+
+<p>A base container named <code>redis</code> would therefore have the following namespacing
+should it meet the relevant rules:</p>
+
+<ol>
+  <li>redis.[group] (where group = the key name of the group)</li>
+  <li>redis.[n] (where n = an index between 1 and the number of desired instances)</li>
+  <li>redis.[group].[n]</li>
+</ol>
+
+<p>These rules indicate that a cluster name by itself <b>will not</b> namespace a container;
+that is, a container named in two clusters will use the same instance. This is because
+clusters are not tied one to one with &lsquo;modes&rsquo; (where different
+containers would be desirable in different clusters)&mdash;it is quite possible different
+clusters may well want to use the same instance of a container. If this isn&rsquo;t what
+you want then be sure to opt-in to a group override in each cluster (and see the following
+note).</p>
+
+<h3>
+<a name="faq-group-optin" class="anchor"><span class="octicon octicon-link"></span></a>Automatic group opt-in</h3>
+
+<p>Since the majority of use-cases (thus far) usually associate a cluster with a different
+environment decking will automatically opt-in to a group with the same name as
+a given cluster if it exists. For example, a cluster named <code>dev</code> will
+look for a group named <code>dev</code> and use its overrides&mdash;<b>and</b>
+namespacing&mdash;if it exists. This eliminates needless configuration like this:</p>
+
+<pre><code>"clusters": {
+  "test": {
+      "group": "test",
+      "containers": ["nfprocessor", "nfconsumer"]
+  },
+  "dev": {
+      "group": "dev",
+      "containers": ["nfprocessor", "nfconsumer"]
+  }
+}</code></pre>
+
+<p>Which, assuming groups named <code>dev</code> and <code>test</code> exist, can
+simply be written as:</p>
+
+<pre><code>"clusters": {
+  "test": ["nfprocessor", "nfconsumer"],
+  "dev": ["nfprocessor", "nfconsumer"]
+}</code></pre>
+
+<p>Thus if you find your clusters accidentally opting in to group overrides, simply
+ensure they have different names.</p>
+
         </section>
 
         <aside id="sidebar">
-          <a href="https://npmjs.org/package/decking" class="button">
-            <small>Download via npm</small>
-            v0.0.12
-          </a>
 
           <p class="repo-owner"><a href="https://github.com/makeusabrew/decking">decking</a> is maintained by <a href="https://github.com/makeusabrew">makeusabrew</a>.</p>
 
@@ -471,7 +534,13 @@ release.</p>
                 <li><a href="#advanced-multi">Multi-node containers</a></li>
               </ul>
             </li>
+            <li><a href=#faq>Notes</a></li>
           </ul>
+
+          <a href="https://npmjs.org/package/decking" class="button">
+            <small>Download via npm</small>
+            v0.0.12
+          </a>
 
           <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
         </aside>
