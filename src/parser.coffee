@@ -17,23 +17,21 @@ module.exports =
         details = config.containers[name] =
           image: details
 
-      details.name = name
-
       details.dependencies ?= []
       details.aliases = []
 
       for dependency,i in details.dependencies
         # it's nicer for rest of the app to work with dependencies and alises
         # as separate arrays
-        [name, alias] = dependency.split ":"
+        [dep, alias] = dependency.split ":"
 
-        alias = name if not alias # if we didn't get dep:alias, assume dep:dep
+        alias = dep if not alias # if we didn't get dep:alias, assume dep:dep
 
-        if not config.containers[name]?
-          err = "Dependency '#{name}' of container '#{details.name}' does not exist!"
+        if not config.containers[dep]?
+          err = "Dependency '#{dep}' of container '#{name}' does not exist!"
           throw new Error err
 
-        details.dependencies[i] = name
+        details.dependencies[i] = dep
         details.aliases[i] = alias
 
     for name, details of config.clusters

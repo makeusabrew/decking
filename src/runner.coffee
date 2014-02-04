@@ -1,7 +1,7 @@
 async = require "async"
 
 module.exports =
-  getArg: (key, val, object, done) ->
+  getArg: (key, val, container, done) ->
     arg = []
 
     switch key
@@ -23,7 +23,7 @@ module.exports =
           # if we got here we still don't have a value for this env var, so
           # we need to ask the user for it
           options =
-            prompt: "#{object.name} requires a value for the env var '#{key}':"
+            prompt: "#{container.name} requires a value for the env var '#{key}':"
             silent: true
             replace: "*"
 
@@ -35,11 +35,11 @@ module.exports =
 
       when "dependencies"
         for v,k in val
-          if object.group
-            v += ".#{object.group}"
+          if container.group
+            v += ".#{container.group}"
           # we trust that the aliases array has the correct matching indices
           # here such that alias[k] is the correct alias for dependencies[k]
-          alias = object.aliases[k]
+          alias = container.object.aliases[k]
           arg = [].concat arg, ["-link #{v}:#{alias}"]
 
       when "port"

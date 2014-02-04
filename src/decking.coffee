@@ -262,7 +262,7 @@ class Decking
         # pass to async. can't just use async.each here as that
         # only works on arrays
         run = []
-        for key,val of details
+        for key,val of details.object
           # don't need to bind 'details', it doesn't change
           do (key, val) ->
             # run is going to be fed into async.series, it expects
@@ -273,8 +273,9 @@ class Decking
         # variables, run them in order and add the results to the initial
         # run command
         async.series run, (err, results) ->
+          # @TODO move all this behind Runner
           cmdArgs = cmdArgs.concat result for result in results
-          cmdArgs.push details.image
+          cmdArgs.push details.object.image
 
           command.exec = cmdArgs.join " "
           commands.push command
@@ -377,42 +378,68 @@ logAction = (name, message) ->
 
   log "#{padName(name)}  #{message}"
 
+hasDependency = (containers, dependency) ->
+  return findContainer(containers, dependency) isnt null
+
+findContainer = (containers, name) ->
+  for container in containers
+    # @TODO remove originalName hack
+    return container if container.originalName is name or container.name is name
+
+  return null
+
+# Cluster.sort() ?
+sortCluster = (containers) ->
+  # resolve dependency order
+  depTree = new DepTree
+  for container in containers
+    depTree.add container.originalName, container.object.dependencies
+
+  (findContainer(containers, item) for item in depTree.resolve())
+
 # @TODO rename; this does more than just order resolution now!
+# resolveClusterContainers?
+# Cluster.resolveContainers?
 resolveOrder = (config, cluster, callback) ->
   if cluster.group
     # right! specifying a group modifier. let's pump it up...
     groupName = cluster.group
     group = config.groups[groupName]
 
-  containerDetails = {}
+  containers = []
 
-  # map container names to actual container definitions
   for container in cluster.containers
-    containerDetails[container.name] = container.object
-
-    # bit of a fudge; tack on how many instances to spawn
-    containerDetails[container.name].count = container.count
-
-    # dependencies might not be listed in the cluster but still
-    # need to be resolved
+    # check for implicit members (unnamed container dependencies)
     for dependency in container.object.dependencies
-      if not containerDetails[dependency]
-        containerDetails[dependency] = config.containers[dependency]
-        containerDetails[dependency].count = 1
+      if not hasDependency cluster.containers, dependency
+        container =
+          name: dependency
+          # if this dependency isn't named in the cluster it can't have a node
+          # count, so give it the default...
+          count: 1
+          object: config.containers[dependency]
+        cluster.containers.push container
+
+  containers = cluster.containers
 
   # rename any containers based on group stuff, calc some max length stuff
   # merge group overrides if present
-  for _, container of containerDetails
+  # @TODO Cluster.mergeOverrides
+  for container in containers
     container.originalName = container.name
 
     if groupName
       container.group = groupName
+      # @FIXME stop overwriting the name property! create a separate variable
+      # called instanceName or something. obj.name always wants to
+      # be the 'canonical' name
       container.name += ".#{groupName}"
 
       # first up, completely replace any container config with
       # the group-wide options
+      # @TODO merge instead of replace?
       for key, value of group.options
-        container[key] = value
+        container.object[key] = value
 
       # now check for container specific overrides...
       if group.containers?[container.originalName]?
@@ -420,7 +447,7 @@ resolveOrder = (config, cluster, callback) ->
           # @TODO we're overwriting here, these should MERGE with
           # those specified group-wide... I think. But only if there
           # was a group wide key maybe?
-          container[key] = value
+          container.object[key] = value
 
     # just used for formatting so we pad the container names equally
     length = container.name.length
@@ -430,15 +457,11 @@ resolveOrder = (config, cluster, callback) ->
     length += container.count.toString().length if container.count > 1
     maxNameLength = length if length > maxNameLength
 
-  # resolve dependency order
-  depTree = new DepTree
-  for _, container of containerDetails
-    depTree.add container.originalName, container.dependencies
-
-  list = (containerDetails[item] for item in depTree.resolve())
+  list = sortCluster containers
 
   # nearly there, we've got a flattened list, but we need to make sure we have
   # the correct number of nodes for each container
+  # @TODO Cluster.xxx
   final = []
   for originalContainer in list
     for i in [1..originalContainer.count]

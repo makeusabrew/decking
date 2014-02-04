@@ -87,9 +87,6 @@ describe "Parser", ->
       it "assigns the correct image to the container", ->
         expect(@config.containers.test.image).to.eql "test/image"
 
-      it "assigns the correct name to the container", ->
-        expect(@config.containers.test.name).to.eql "test"
-
       it "assigns an empty dependencies array to the container", ->
         expect(@config.containers.test.dependencies).to.eql []
 

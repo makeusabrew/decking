@@ -48,19 +48,21 @@ describe "Runner", ->
   describe "dependencies", ->
     describe "with no group override", ->
       beforeEach (done) ->
-        object =
-          aliases: ["dep1", "alias2"]
-        Runner.getArg "dependencies", ["dep1", "dep2"], object, (err, @arg) => done()
+        container =
+          object:
+            aliases: ["dep1", "alias2"]
+        Runner.getArg "dependencies", ["dep1", "dep2"], container, (err, @arg) => done()
 
       it "transforms the values correctly", ->
         expect(@arg).to.eql ["-link dep1:dep1", "-link dep2:alias2"]
 
     describe "with a group override", ->
       beforeEach (done) ->
-        object =
+        container =
           group: "dev"
-          aliases: ["dep1", "alias2"]
-        Runner.getArg "dependencies", ["dep1", "dep2"], object, (err, @arg) => done()
+          object:
+            aliases: ["dep1", "alias2"]
+        Runner.getArg "dependencies", ["dep1", "dep2"], container, (err, @arg) => done()
 
       it "applies the correct container namespace to each link", ->
         expect(@arg).to.eql ["-link dep1.dev:dep1", "-link dep2.dev:alias2"]
