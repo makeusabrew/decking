@@ -109,3 +109,23 @@ describe "Instance methods", ->
 
       it "throws the expected error", ->
         expect(@e.message).to.eql "ENOENT, no such file or directory './decking.json'"
+
+  describe "hasArg", ->
+    beforeEach ->
+      @decking = new Decking
+
+    describe "When the argument exists", ->
+      beforeEach ->
+        @decking.args = ["foo", "myarg"]
+        @result = @decking.hasArg "myarg"
+
+      it "returns true", ->
+        expect(@result).to.be.true
+
+    describe "When the argument does not exist", ->
+      beforeEach ->
+        @decking.args = ["foo", "myarg"]
+        @result = @decking.hasArg "somearg"
+
+      it "returns true", ->
+        expect(@result).to.be.false
