@@ -336,6 +336,10 @@ class Decking
     options =
       t: image
 
+    if @hasArg "--no-cache"
+      log "Not using image cache"
+      options.nocache = true
+
     log "Uploading compressed context..."
 
     # @TODO allow user to specifiy --exclude params to avoid unnecessarily huge tarballs
@@ -367,6 +371,8 @@ class Decking
     @config = @loadConfig "./decking.json" if @command isnt "help"
 
     return fn.call this, (err) -> throw err if err
+
+  hasArg: (arg) -> @args.indexOf(arg) isnt -1
 
 maxNameLength = 0
 
