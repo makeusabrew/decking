@@ -252,7 +252,6 @@ class Decking
           return callback null
 
         # basic args we know we'll need
-        cmdArgs = ["docker", "run", "-d", "-name", "#{name}"]
 
         # this starts to get a bit messy; we have to loop over
         # our container's options and using a closure bind a
@@ -262,7 +261,8 @@ class Decking
         # pass to async. can't just use async.each here as that
         # only works on arrays
         run = []
-        for key,val of details.object
+        sortedArgs = Runner.sortArgs details.object
+        for key,val of sortedArgs
           # don't need to bind 'details', it doesn't change
           do (key, val) ->
             # run is going to be fed into async.series, it expects
@@ -273,11 +273,11 @@ class Decking
         # variables, run them in order and add the results to the initial
         # run command
         async.series run, (err, results) ->
-          # @TODO move all this behind Runner
-          cmdArgs = cmdArgs.concat result for result in results
-          cmdArgs.push details.object.image
+          throw err if err
+          command.exec = Runner.formatArgs name, results
 
-          command.exec = cmdArgs.join " "
+          console.log command.exec
+          process.exit 0
           commands.push command
 
           callback null

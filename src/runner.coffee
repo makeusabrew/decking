@@ -59,4 +59,30 @@ module.exports =
           host = process.cwd() if host is "."
           arg = [].concat arg, ["-v #{host}:#{remote}"]
 
+      when "image", "extra"
+        arg = [val]
+      else
+        return done new Error("Unknown argument #{key}")
+
     return done null, arg
+
+  sortArgs: (object) ->
+    order = [
+      "env"
+      "dependencies"
+      "port"
+      "privileged"
+      "mount"
+      "image"
+      "extra"
+    ]
+    sorted = {}
+    for key in order
+      sorted[key] = object[key] if object[key]
+
+    return sorted
+
+  formatArgs: (name, args) ->
+    cmdArgs = ["docker", "run", "-d", "-name", "#{name}"]
+    cmdArgs = cmdArgs.concat arg for arg in args
+    return cmdArgs.join " "
