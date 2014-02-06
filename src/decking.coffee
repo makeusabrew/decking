@@ -276,8 +276,6 @@ class Decking
           throw err if err
           command.exec = Runner.formatArgs name, results
 
-          console.log command.exec
-          process.exit 0
           commands.push command
 
           callback null
