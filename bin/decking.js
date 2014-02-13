@@ -5,7 +5,7 @@ domain = require("domain");
 
 colors = require("colors");
 
-Decking = require("../index.coffee");
+Decking = require("../index");
 
 options = {
   command: process.argv[2],
