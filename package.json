@@ -28,7 +28,7 @@
     "deptree": "~0.1.0",
     "read": "~1.0.5",
     "JSONStream": "~0.7.1",
-    "dockerode": "~1.2.2",
+    "dockerode": "~1.2.7",
     "colors": "~0.6.2"
   }
 }
