@@ -122,7 +122,7 @@ class Decking
       isRunning container, (err, running) ->
         if running
           logAction name, "stopping..."
-          container.stop callback
+          container.stop t:5, callback
         else
           logAction name, "skipping (already stopped)"
           callback null
@@ -141,7 +141,7 @@ class Decking
       isRunning container, (err, running) ->
         if running
           logAction name, "restarting..."
-          container.stop (err) ->
+          container.stop t:5, (err) ->
             container.start callback
         else
           logAction name, "starting..."
@@ -292,7 +292,7 @@ class Decking
           return command.container.start callback if not running
 
           # container exists AND is running - stop, restart
-          return command.container.stop (err) ->
+          return command.container.stop t:5, (err) ->
             command.container.start callback
 
       logAction name, "creating..."
@@ -301,7 +301,7 @@ class Decking
 
     stopIterator = (details, callback) ->
       container = docker.getContainer details.name
-      container.stop callback
+      container.stop t:5, callback
 
     resolveOrder @config, cluster, (list) ->
       async.eachSeries list, fetchIterator, (err) ->
@@ -311,7 +311,7 @@ class Decking
           # @FIXME hack to avoid ghosts with quick start/stop combos
           setTimeout ->
             async.eachLimit list, 5, stopIterator, done
-          , 500
+          , 1000
 
   build: (image, done) ->
 
