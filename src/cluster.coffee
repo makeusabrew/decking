@@ -1,8 +1,6 @@
 DepTree = require "deptree"
 
 module.exports =
-  maxLength: 0
-
   # @TODO rename; this does more than just order resolution now!
   resolveContainers: (config, cluster, callback) ->
     if cluster.group
@@ -52,14 +50,6 @@ module.exports =
             # those specified group-wide... I think. But only if there
             # was a group wide key maybe?
             container.object[key] = value
-
-      # just used for formatting so we pad the container names equally
-      length = container.name.length
-      # this is a multi-node definition so we'll suffix it .(n) in a minute
-      # we can't do it here because we don't have unique objects for each
-      # n instance; we just have one canonical container at this point
-      length += container.count.toString().length if container.count > 1
-      module.exports.maxLength = length if length > module.exports.maxLength
 
     list = sortCluster containers
 

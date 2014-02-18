@@ -7,12 +7,14 @@ JSONStream    = require "JSONStream"
 Parser  = require "./parser"
 Runner  = require "./runner"
 Cluster = require "./cluster"
+Logger  = require "./logger"
+Table   = require "./table"
 
 MultiplexStream = require "./multiplex_stream"
 
 docker = new Docker socketPath: "/var/run/docker.sock"
-logger = process.stdout
-log    = (data) -> logger.write "#{data}\n"
+
+log = Logger.log
 
 version = require("#{__dirname}/../package.json").version
 
@@ -97,13 +99,13 @@ class Decking
       container = docker.getContainer name
       isRunning container, (err, running) ->
         if not running
-          logAction name, "starting..."
+          Table.render name, "starting..."
           container.start callback
         else
-          logAction name, "skipping (already running)"
+          Table.render name, "skipping (already running)"
           callback null
 
-    Cluster.resolveContainers @config, cluster, (list) ->
+    resolveContainers @config, cluster, (list) ->
 
       validateContainerPresence list, (err) ->
         return done err if err
@@ -121,13 +123,13 @@ class Decking
       container = docker.getContainer name
       isRunning container, (err, running) ->
         if running
-          logAction name, "stopping..."
+          Table.render name, "stopping..."
           container.stop t:5, callback
         else
-          logAction name, "skipping (already stopped)"
+          Table.render name, "skipping (already stopped)"
           callback null
 
-    Cluster.resolveContainers @config, cluster, (list) ->
+    resolveContainers @config, cluster, (list) ->
 
       validateContainerPresence list, (err) ->
         return done err if err
@@ -140,14 +142,14 @@ class Decking
       container = docker.getContainer name
       isRunning container, (err, running) ->
         if running
-          logAction name, "restarting..."
+          Table.render name, "restarting..."
           container.stop t:5, (err) ->
             container.start callback
         else
-          logAction name, "starting..."
+          Table.render name, "starting..."
           container.start callback
 
-    Cluster.resolveContainers @config, cluster, (list) ->
+    resolveContainers @config, cluster, (list) ->
 
       validateContainerPresence list, (err) ->
         return done err if err
@@ -163,12 +165,12 @@ class Decking
         isRunning container, (err, running) ->
           if running
             attach name, container, false, ->
-              logAction name, "re-attached"
+              Table.render name, "re-attached"
           else
             if attempts < 100
               reAttach name, container, attempts + 1
             else
-              logAction name, "max re-attach attempts reached, bailing..."
+              Table.render name, "max re-attach attempts reached, bailing..."
       , timeout
 
     attach = (name, container, fetchLogs, callback) ->
@@ -180,10 +182,10 @@ class Decking
         logs: fetchLogs
 
       container.attach options, (err, stream) ->
-        new MultiplexStream container, stream, padName(name, "(", ")")
+        new MultiplexStream container, stream, Table.padName(name, "(", ")")
 
         stream.on "end", ->
-          logAction name, "gone away, will try to re-attach for one minute..."
+          Table.render name, "gone away, will try to re-attach for one minute..."
           reAttach name, container
 
         callback? err
@@ -192,7 +194,7 @@ class Decking
       container = docker.getContainer details.name
       attach details.name, container, true, callback
 
-    Cluster.resolveContainers @config, cluster, (list) ->
+    resolveContainers @config, cluster, (list) ->
 
       validateContainerPresence list, (err) ->
         return done err if err
@@ -206,7 +208,7 @@ class Decking
       container = docker.getContainer name
       container.inspect (err, data) ->
         if err # @TODO inspect
-          logAction name, "does not exist"
+          Table.render name, "does not exist"
         else if data.State.Running
           str = "running  "
           ip = data.NetworkSettings.IPAddress
@@ -217,13 +219,13 @@ class Decking
             if host
               str += "#{host.HostIp}:#{host.HostPort}->"
             str += local
-          logAction name, str
+          Table.render name, str
         else
-          logAction name, "stopped"
+          Table.render name, "stopped"
 
         callback null
 
-    Cluster.resolveContainers @config, cluster, (list) ->
+    resolveContainers @config, cluster, (list) ->
       async.eachSeries list, iterator, done
 
   create: (cluster, done) ->
@@ -287,7 +289,7 @@ class Decking
         # already exists, BUT it might be a dependency so it needs starting
         #log "Container #{name} already exists, skipping..."
         # @TODO check if this container has dependents or not...
-        logAction name, "already exists - running in case of dependents"
+        Table.render name, "already exists - running in case of dependents"
         return isRunning command.container, (err, running) ->
           return command.container.start callback if not running
 
@@ -295,7 +297,7 @@ class Decking
           return command.container.stop t:5, (err) ->
             command.container.start callback
 
-      logAction name, "creating..."
+      Table.render name, "creating..."
 
       child_process.exec command.exec, callback
 
@@ -303,7 +305,7 @@ class Decking
       container = docker.getContainer details.name
       container.stop t:5, callback
 
-    Cluster.resolveContainers @config, cluster, (list) ->
+    resolveContainers @config, cluster, (list) ->
       async.eachSeries list, fetchIterator, (err) ->
         throw err if err
         async.eachSeries commands, createIterator, (err) ->
@@ -372,13 +374,11 @@ class Decking
 
   hasArg: (arg) -> @args.indexOf(arg) isnt -1
 
-padName = (name, prefix = "", suffix = "") ->
-  pad = (Cluster.maxLength + 1) - name.length
-  return "#{prefix}#{name}#{suffix}#{Array(pad).join(" ")}"
 
-logAction = (name, message) ->
-
-  log "#{padName(name)}  #{message}"
+resolveContainers = (config, cluster, callback) ->
+  Cluster.resolveContainers config, cluster, (list) ->
+    Table.setContainers list
+    callback list
 
 validateContainerPresence = (list, done) ->
   iterator = (details, callback) ->
