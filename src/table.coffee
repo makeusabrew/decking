@@ -25,12 +25,18 @@ Table =
 
   render: (name, message) ->
     rows[name] = message
-    offset = rowCount
-    Logger.write "#{csi}#{offset}F"
+    clear()
     Table.renderRows()
+
+  renderOk: (name) ->
+    Table.render name, "#{rows[name]} #{csi}32m✔#{csi}0m"
 
   padName: (name, prefix = "", suffix = "") ->
     pad = (maxLength + 1) - name.length
     return "#{prefix}#{name}#{suffix}#{Array(pad).join(" ")}"
 
 module.exports = Table
+
+clear = ->
+  offset = rowCount
+  Logger.write "#{csi}#{offset}F"
