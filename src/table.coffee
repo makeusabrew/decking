@@ -1,7 +1,11 @@
 Logger = require "./logger"
 
 rows = {}
+rowCount = 0
 maxLength = 0
+
+esc = "\u001B"
+csi = "#{esc}["
 
 Table =
   setContainers: (list) ->
@@ -10,14 +14,23 @@ Table =
       length = container.name.length
       maxLength = length if length > maxLength
 
-      rows[container.name] = ""
+      rows[container.name] = "..."
+      rowCount += 1
+
+    Table.renderRows()
+
+  renderRows: ->
+    for key,text of rows
+      Logger.log "#{Table.padName(key)}  #{text}"
 
   render: (name, message) ->
-    Logger.log "#{Table.padName(name)}  #{message}"
+    rows[name] = message
+    offset = rowCount
+    Logger.write "#{csi}#{offset}F"
+    Table.renderRows()
 
   padName: (name, prefix = "", suffix = "") ->
     pad = (maxLength + 1) - name.length
     return "#{prefix}#{name}#{suffix}#{Array(pad).join(" ")}"
 
 module.exports = Table
-
