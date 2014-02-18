@@ -15,6 +15,7 @@ MultiplexStream = require "./multiplex_stream"
 docker = new Docker socketPath: "/var/run/docker.sock"
 
 log = Logger.log
+logStream = (name, data) -> log "#{Table.padName(name, "(", ")")} #{data}"
 
 version = require("#{__dirname}/../package.json").version
 
@@ -100,9 +101,12 @@ class Decking
       isRunning container, (err, running) ->
         if not running
           Table.render name, "starting..."
-          container.start callback
+          container.start (err) ->
+            return callback(err) if err
+            Table.renderOk name
+            callback null
         else
-          Table.render name, "skipping (already running)"
+          Table.render name, "already running"
           callback null
 
     resolveContainers @config, cluster, (list) ->
@@ -124,9 +128,12 @@ class Decking
       isRunning container, (err, running) ->
         if running
           Table.render name, "stopping..."
-          container.stop t:5, callback
+          container.stop t:5, (err) ->
+            return callback(err) if err
+            Table.renderOk name
+            callback null
         else
-          Table.render name, "skipping (already stopped)"
+          Table.render name, "already stopped"
           callback null
 
     resolveContainers @config, cluster, (list) ->
@@ -144,10 +151,17 @@ class Decking
         if running
           Table.render name, "restarting..."
           container.stop t:5, (err) ->
-            container.start callback
+            return callback(err) if err
+            container.start (err) ->
+              return callback(err) if err
+              Table.renderOk name
+              callback null
         else
           Table.render name, "starting..."
-          container.start callback
+          container.start (err) ->
+            return callback(err) if err
+            Table.renderOk name
+            callback null
 
     resolveContainers @config, cluster, (list) ->
 
@@ -165,12 +179,12 @@ class Decking
         isRunning container, (err, running) ->
           if running
             attach name, container, false, ->
-              Table.render name, "re-attached"
+              logStream name, "re-attached"
           else
-            if attempts < 100
+            if attempts < 200
               reAttach name, container, attempts + 1
             else
-              Table.render name, "max re-attach attempts reached, bailing..."
+              logStream name, "max re-attach attempts reached, bailing..."
       , timeout
 
     attach = (name, container, fetchLogs, callback) ->
@@ -185,7 +199,7 @@ class Decking
         new MultiplexStream container, stream, Table.padName(name, "(", ")")
 
         stream.on "end", ->
-          Table.render name, "gone away, will try to re-attach for one minute..."
+          logStream name, "gone away, will try to re-attach for two minutes..."
           reAttach name, container
 
         callback? err
