@@ -313,15 +313,23 @@ class Decking
 
       Table.render name, "creating..."
 
-      child_process.exec command.exec, callback
+      child_process.exec command.exec, (err) ->
+        return callback(err) if err
+        Table.renderOk name
+        callback null
 
     stopIterator = (details, callback) ->
       container = docker.getContainer details.name
       container.stop t:5, callback
 
-    resolveContainers @config, cluster, (list) ->
+    Cluster.resolveContainers @config, cluster, (list) ->
       async.eachSeries list, fetchIterator, (err) ->
         throw err if err
+
+        # once we've fetched any args (which might come from stdin) THEN
+        # we can render the initial table
+        Table.setContainers list
+
         async.eachSeries commands, createIterator, (err) ->
           throw err if err
           # @FIXME hack to avoid ghosts with quick start/stop combos
