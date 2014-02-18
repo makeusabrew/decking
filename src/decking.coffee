@@ -240,7 +240,7 @@ class Decking
         callback null
 
     resolveContainers @config, cluster, (list) ->
-      async.eachSeries list, iterator, done
+      async.eachLimit list, 3, iterator, done
 
   create: (cluster, done) ->
     # create a container based on metadata
