@@ -21,7 +21,7 @@ Table =
 
   renderRows: ->
     for key,text of rows
-      Logger.log "#{Table.padName(key)}  #{text}"
+      Logger.log "#{csi}2K#{Table.padName(key)}  #{text}"
 
   render: (name, message) ->
     rows[name] = message
