@@ -19,14 +19,17 @@ Table =
 
     Table.renderRows()
 
-  renderRows: ->
+  renderRows: (clear = false) ->
+    str = ""
+    str += "#{csi}#{rowCount}F" if clear
     for key,text of rows
-      Logger.log "#{csi}2K#{Table.padName(key)}  #{text}"
+      str += "#{csi}2K#{Table.padName(key)}  #{text}\n"
+
+    Logger.write str
 
   render: (name, message) ->
     rows[name] = message
-    clear()
-    Table.renderRows()
+    Table.renderRows true
 
   renderOk: (name) ->
     Table.render name, "#{rows[name]} #{csi}32m✔#{csi}0m"
@@ -36,7 +39,3 @@ Table =
     return "#{prefix}#{name}#{suffix}#{Array(pad).join(" ")}"
 
 module.exports = Table
-
-clear = ->
-  offset = rowCount
-  Logger.write "#{csi}#{offset}F"
