@@ -12,7 +12,9 @@ Table   = require "./table"
 
 MultiplexStream = require "./multiplex_stream"
 
-docker = new Docker socketPath: "/var/run/docker.sock"
+host = process.env.DOCKER_HOST || "/var/run/docker.sock"
+
+docker = new Docker socketPath: host
 
 log = Logger.log
 logStream = (name, data) -> log "#{Table.padName(name, "(", ")")} #{data}"
