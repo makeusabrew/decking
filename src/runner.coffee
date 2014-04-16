@@ -40,7 +40,7 @@ module.exports =
           # we trust that the aliases array has the correct matching indices
           # here such that alias[k] is the correct alias for dependencies[k]
           alias = container.object.aliases[k]
-          arg = [].concat arg, ["-link #{v}:#{alias}"]
+          arg = [].concat arg, ["--link #{v}:#{alias}"]
 
       when "port"
         arg = [].concat arg, ["-p #{v}"] for v in val
@@ -83,6 +83,6 @@ module.exports =
     return sorted
 
   formatArgs: (name, args) ->
-    cmdArgs = ["docker", "run", "-d", "-name", "#{name}"]
+    cmdArgs = ["docker", "run", "-d", "--name", "#{name}"]
     cmdArgs = cmdArgs.concat arg for arg in args
     return cmdArgs.join " "

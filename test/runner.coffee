@@ -57,7 +57,7 @@ describe "Runner", ->
           Runner.getArg "dependencies", ["dep1", "dep2"], container, (err, @arg) => done()
 
         it "transforms the values correctly", ->
-          expect(@arg).to.eql ["-link dep1:dep1", "-link dep2:alias2"]
+          expect(@arg).to.eql ["--link dep1:dep1", "--link dep2:alias2"]
 
       describe "with a group override", ->
         beforeEach (done) ->
@@ -68,7 +68,7 @@ describe "Runner", ->
           Runner.getArg "dependencies", ["dep1", "dep2"], container, (err, @arg) => done()
 
         it "applies the correct container namespace to each link", ->
-          expect(@arg).to.eql ["-link dep1.dev:dep1", "-link dep2.dev:alias2"]
+          expect(@arg).to.eql ["--link dep1.dev:dep1", "--link dep2.dev:alias2"]
 
     describe "port", ->
       beforeEach (done) ->
@@ -176,4 +176,4 @@ describe "Runner", ->
         @result = Runner.formatArgs "container", ["-e", "ENV=foo"]
 
       it "returns the expected string", ->
-        expect(@result).to.eql "docker run -d -name container -e ENV=foo"
+        expect(@result).to.eql "docker run -d --name container -e ENV=foo"
