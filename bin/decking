@@ -1,18 +1,27 @@
-#!/usr/bin/env coffee
-domain  = require "domain"
-colors  = require "colors"
-Decking = require "../index.coffee"
+#!/usr/bin/env node
+var Decking, colors, d, decking, domain, options;
 
-options =
-  command: process.argv[2]
-  args: process.argv[3...]
+domain = require("domain");
 
-decking = new Decking options
+colors = require("colors");
 
-d = domain.create()
+Decking = require("../index");
 
-d.on "error", (e) ->
-  console.log e.stack.red
+options = {
+  command: process.argv[2],
+  args: process.argv.slice(3)
+};
 
-d.run -> setImmediate ->
-  decking.execute()
+decking = new Decking(options);
+
+d = domain.create();
+
+d.on("error", function(e) {
+  return console.log(e.stack.red);
+});
+
+d.run(function() {
+  return setImmediate(function() {
+    return decking.execute();
+  });
+});

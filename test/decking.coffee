@@ -3,7 +3,7 @@ expect = chai.expect
 sinon  = require "sinon"
 chai.use require("sinon-chai")
 
-Decking = require "../src/decking"
+Decking = require "../lib/decking"
 
 describe "Decking", ->
   it "is a function", ->

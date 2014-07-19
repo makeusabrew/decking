@@ -3,7 +3,7 @@ expect = chai.expect
 sinon  = require "sinon"
 chai.use require("sinon-chai")
 
-Runner = require "../src/runner"
+Runner = require "../lib/runner"
 
 describe "Runner", ->
 

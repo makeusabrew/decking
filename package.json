@@ -4,15 +4,12 @@
   "description": "A Docker helper to create, manage and run clusters of containers",
   "main": "index.js",
   "preferGlobal": true,
-  "scripts": {
-    "prepublish": "grunt"
-  },
   "repository": {
     "type": "git",
     "url": "http://github.com/makeusabrew/decking.git"
   },
   "bin": {
-    "decking": "./bin/decking.js"
+    "decking": "./bin/decking"
   },
   "author": "Nick Payne",
   "license": "MIT",

@@ -3,7 +3,7 @@ expect = chai.expect
 sinon  = require "sinon"
 chai.use require("sinon-chai")
 
-Parser = require "../src/parser"
+Parser = require "../lib/parser"
 
 describe "Parser", ->
   beforeEach ->
