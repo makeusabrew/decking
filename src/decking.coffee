@@ -357,7 +357,7 @@ class Decking
     # @TODO need a lot of careful validation here
     readStream = fs.createReadStream(targetPath)
     writeStream = fs.createWriteStream("./Dockerfile")
-    writeStream.on "done", () =>
+    writeStream.on "done", =>
 
       options =
         t: image
