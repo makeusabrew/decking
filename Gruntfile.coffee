@@ -11,9 +11,3 @@ module.exports = (grunt) ->
         src: ["test/**/*.coffee"]
 
   grunt.registerTask "test", ["simplemocha:all"]
-  grunt.registerTask "compile", ->
-    done = @async()
-    exec = require("child_process").exec
-    exec "coffee -c -o lib/ src/", done
-
-  grunt.registerTask "default", "compile"
