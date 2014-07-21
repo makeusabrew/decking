@@ -355,36 +355,40 @@ class Decking
 
     # @TODO for now, always assume we want to build from a Dockerfile
     # @TODO need a lot of careful validation here
-    fs.createReadStream(targetPath).pipe fs.createWriteStream("./Dockerfile")
+    readStream = fs.createReadStream(targetPath)
+    writeStream = fs.createWriteStream("./Dockerfile")
+    writeStream.on "done", () =>
 
-    options =
-      t: image
+      options =
+        t: image
 
-    if @hasArg "--no-cache"
-      log "Not using image cache"
-      options.nocache = true
+      if @hasArg "--no-cache"
+        log "Not using image cache"
+        options.nocache = true
 
-    log "Uploading compressed context..."
+      log "Uploading compressed context..."
 
-    # @TODO allow user to specifiy --exclude params to avoid unnecessarily huge tarballs
-    tar = child_process.spawn "tar", ["-c", "-", "./"]
+      # @TODO allow user to specifiy --exclude params to avoid unnecessarily huge tarballs
+      tar = child_process.spawn "tar", ["-c", "-", "./"]
 
-    docker.buildImage tar.stdout, options, (err, res) ->
-      fs.unlink "./Dockerfile", (err) -> log "[WARN] Could not remove Dockerfile" if err
+      docker.buildImage tar.stdout, options, (err, res) ->
+        fs.unlink "./Dockerfile", (err) -> log "[WARN] Could not remove Dockerfile" if err
 
-      return done err if err
+        return done err if err
 
-      if res.headers["content-type"] is "application/json"
-        res
-          .pipe(JSONStream.parse "stream")
-          .pipe(process.stdout)
-      else
-        # we don't need an if/else but let's keep it for clarity; it'd be too easy to
-        # skim-read the code and misinterpret the first pipe otherwise
-        res
-          .pipe(process.stdout)
+        if res.headers["content-type"] is "application/json"
+          res
+            .pipe(JSONStream.parse "stream")
+            .pipe(process.stdout)
+        else
+          # we don't need an if/else but let's keep it for clarity; it'd be too easy to
+          # skim-read the code and misinterpret the first pipe otherwise
+          res
+            .pipe(process.stdout)
 
-      res.on "end", done
+        res.on "end", done
+
+    readStream.pipe writeStream
 
   execute: (done) ->
     @command = "help" if not @command or @command is "-h" or @command is "--help"
