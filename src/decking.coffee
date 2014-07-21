@@ -3,6 +3,7 @@ child_process = require "child_process"
 async         = require "async"
 Docker        = require "dockerode"
 JSONStream    = require "JSONStream"
+urlUtils      = require "url"
 
 Parser  = require "./parser"
 Runner  = require "./runner"
@@ -12,9 +13,7 @@ Table   = require "./table"
 
 MultiplexStream = require "./multiplex_stream"
 
-host = process.env.DOCKER_HOST || "/var/run/docker.sock"
-
-docker = new Docker socketPath: host
+docker = new Docker(connectionOpts())
 
 log = Logger.log
 logStream = (name, data) -> log "#{Table.padName(name, "(", ")")} #{data}"
@@ -401,6 +400,23 @@ class Decking
     return fn.call this, (err) -> throw err if err
 
   hasArg: (arg) -> @args.indexOf(arg) isnt -1
+
+connectionOpts = () ->
+  dockerHost = process.env.DOCKER_HOST || "/var/run/docker.sock"
+  hostUrl = urlUtils.parse dockerHost
+
+  if hostUrl.hostname
+    protocol = if hostUrl.protocol == 'tcp:'
+      'http:'
+    else
+      hostUrl.protocol
+
+    {
+      host: "#{protocol}//#{hostUrl.hostname}",
+      port: parseInt(hostUrl.port)
+    }
+  else
+    { socketPath: dockerHost }
 
 
 resolveContainers = (config, cluster, callback) ->
