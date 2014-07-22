@@ -8,6 +8,6 @@ module.exports = (grunt) ->
         reporter: "spec"
 
       all:
-        src: ["test/**/*.coffee"]
+        src: ["test/**/*.js"]
 
   grunt.registerTask "test", ["simplemocha:all"]
