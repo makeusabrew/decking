@@ -2,6 +2,7 @@
 var chai = require("chai");
 var expect = chai.expect;
 var sinon = require("sinon");
+var util = require("util");
 chai.use(require("sinon-chai"));
 
 // Lib
@@ -114,7 +115,7 @@ describe("Parser", function() {
     });
 
     it("throws the correct error", function() {
-      expect(this.e.message).to.eql("Cluster baz is empty");
+      expect(this.e.message).to.eql("Cluster 'baz' is empty");
     });
   });
 
@@ -244,6 +245,56 @@ describe("Parser", function() {
     });
   });
 
+  describe("mount-from definitions", function() {
+
+    beforeEach(function() {
+      return this.config = {
+        containers: {
+          dep1: "image/dep"
+        },
+        clusters: {
+          test: ["test"]
+        }
+      };
+    });
+
+    describe("when a listed mount-from does not exist ", function() {
+
+      beforeEach(function() {
+        var e;
+        this.config.containers.test = {
+          image: "image/test",
+          "mount-from": ["invalid"]
+        };
+        try {
+          return Parser.load(this.config);
+        } catch (_error) {
+          e = _error;
+          return this.e = e;
+        }
+      });
+
+      it("throws the expected error", function() {
+        expect(this.e.message).to.eql("'mount-from' dependency 'invalid' of container 'test' does not exist!");
+      });
+    });
+
+    describe("when a listed mount-from exists", function() {
+
+      beforeEach(function() {
+        this.config.containers.test = {
+          image: "image/test",
+          "mount-from": ["dep1"]
+        };
+        return Parser.load(this.config);
+      });
+
+      it("should do nothing", function() {
+        expect(this.config.containers.test["mount-from"]).to.eql(["dep1"]);
+      });
+    });
+  });
+
   describe("basic cluster definition", function() {
 
     beforeEach(function() {
@@ -272,7 +323,7 @@ describe("Parser", function() {
       });
 
       it("throws the expected error", function() {
-        expect(this.e.message).to.eql("Container invalid does not exist");
+        expect(this.e.message).to.eql("Container 'invalid' does not exist");
       });
     });
 
@@ -317,6 +368,54 @@ describe("Parser", function() {
       it("assigns the correct containers to the cluster", function() {
         expect(this.config.clusters.cluster.containers).to.be.an("array");
         expect(this.config.clusters.cluster.containers).to.have.lengthOf(1);
+      });
+    });
+  });
+
+  describe("multi-node cluster definition", function() {
+
+    beforeEach(function() {
+      return this.config = {
+        containers: {
+          test: "image/name"
+        }
+      };
+    });
+
+    describe("shorthand notation", function() {
+
+      beforeEach(function() {
+        this.config.clusters = {
+          cluster: ["test(4)"]
+        };
+        return Parser.load(this.config);
+      });
+
+      it("assigns the correct containers to the cluster", function() {
+        expect(this.config.clusters.cluster.containers).to.be.an("array");
+        expect(this.config.clusters.cluster.containers).to.have.lengthOf(1);
+        expect(this.config.clusters.cluster.containers[0].count).to.equal(4);
+      });
+
+      describe("when a container trys to mount-from a multi-node container", function() {
+
+        beforeEach(function() {
+          var e;
+          this.config.containers.test2 = {
+            image: "image/test",
+            "mount-from": ["test"]
+          };
+          try {
+            return Parser.load(this.config);
+          } catch (_error) {
+            e = _error;
+            return this.e = e;
+          }
+        });
+
+        it("throws the expected error", function() {
+          expect(this.e.message).to.eql("Container 'test' can not mount-from multi-node container 'test2'");
+        });
       });
     });
   });
