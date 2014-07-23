@@ -16,7 +16,7 @@ describe("Parser", function() {
   });
 
   it("exposes the correct method", function() {
-    return expect(Parser.load).to.be.a("function");
+    expect(Parser.load).to.be.a("function");
   });
 
   describe("with no containers", function() {
@@ -31,8 +31,8 @@ describe("Parser", function() {
       }
     });
 
-    return it("throws the correct error", function() {
-      return expect(this.e.message).to.eql("No containers defined!");
+    it("throws the correct error", function() {
+      expect(this.e.message).to.eql("No containers defined!");
     });
   });
 
@@ -49,8 +49,8 @@ describe("Parser", function() {
       }
     });
 
-    return it("throws the correct error", function() {
-      return expect(this.e.message).to.eql("No containers defined!");
+    it("throws the correct error", function() {
+      expect(this.e.message).to.eql("No containers defined!");
     });
   });
 
@@ -69,8 +69,8 @@ describe("Parser", function() {
       }
     });
 
-    return it("throws the correct error", function() {
-      return expect(this.e.message).to.eql("No clusters defined!");
+    it("throws the correct error", function() {
+      expect(this.e.message).to.eql("No clusters defined!");
     });
   });
 
@@ -90,8 +90,8 @@ describe("Parser", function() {
       }
     });
 
-    return it("throws the correct error", function() {
-      return expect(this.e.message).to.eql("No clusters defined!");
+    it("throws the correct error", function() {
+      expect(this.e.message).to.eql("No clusters defined!");
     });
   });
 
@@ -113,8 +113,8 @@ describe("Parser", function() {
       }
     });
 
-    return it("throws the correct error", function() {
-      return expect(this.e.message).to.eql("Cluster baz is empty");
+    it("throws the correct error", function() {
+      expect(this.e.message).to.eql("Cluster baz is empty");
     });
   });
 
@@ -141,19 +141,19 @@ describe("Parser", function() {
       });
 
       it("assigns the correct image to the container", function() {
-        return expect(this.config.containers.test.image).to.eql("test/image");
+        expect(this.config.containers.test.image).to.eql("test/image");
       });
 
       it("assigns an empty dependencies array to the container", function() {
-        return expect(this.config.containers.test.dependencies).to.eql([]);
+        expect(this.config.containers.test.dependencies).to.eql([]);
       });
 
-      return it("assigns an empty aliases array to the container", function() {
-        return expect(this.config.containers.test.aliases).to.eql([]);
+      it("assigns an empty aliases array to the container", function() {
+        expect(this.config.containers.test.aliases).to.eql([]);
       });
     });
 
-    return describe("shorthand notation", function() {
+    describe("shorthand notation", function() {
 
       beforeEach(function() {
         this.config.containers = {
@@ -162,8 +162,8 @@ describe("Parser", function() {
         return Parser.load(this.config);
       });
 
-      return it("assigns the correct image to the container", function() {
-        return expect(this.config.containers.test.image).to.eql("image/name");
+      it("assigns the correct image to the container", function() {
+        expect(this.config.containers.test.image).to.eql("image/name");
       });
     });
   });
@@ -197,12 +197,12 @@ describe("Parser", function() {
         }
       });
 
-      return it("throws the expected error", function() {
-        return expect(this.e.message).to.eql("Dependency 'invalid' of container 'test' does not exist!");
+      it("throws the expected error", function() {
+        expect(this.e.message).to.eql("Dependency 'invalid' of container 'test' does not exist!");
       });
     });
 
-    return describe("when a listed dependency exists", function() {
+    describe("when a listed dependency exists", function() {
 
       describe("when not specifying an alias", function() {
 
@@ -215,15 +215,15 @@ describe("Parser", function() {
         });
 
         it("populates the container's dependencies correctly", function() {
-          return expect(this.config.containers.test.dependencies).to.eql(["dep1"]);
+          expect(this.config.containers.test.dependencies).to.eql(["dep1"]);
         });
 
-        return it("populates the container's aliases correctly", function() {
-          return expect(this.config.containers.test.aliases).to.eql(["dep1"]);
+        it("populates the container's aliases correctly", function() {
+          expect(this.config.containers.test.aliases).to.eql(["dep1"]);
         });
       });
 
-      return describe("when specifying an alias", function() {
+      describe("when specifying an alias", function() {
 
         beforeEach(function() {
           this.config.containers.test = {
@@ -234,17 +234,17 @@ describe("Parser", function() {
         });
 
         it("populates the container's dependencies correctly", function() {
-          return expect(this.config.containers.test.dependencies).to.eql(["dep1"]);
+          expect(this.config.containers.test.dependencies).to.eql(["dep1"]);
         });
 
-        return it("populates the container's aliases correctly", function() {
-          return expect(this.config.containers.test.aliases).to.eql(["alias1"]);
+        it("populates the container's aliases correctly", function() {
+          expect(this.config.containers.test.aliases).to.eql(["alias1"]);
         });
       });
     });
   });
 
-  return describe("basic cluster definition", function() {
+  describe("basic cluster definition", function() {
 
     beforeEach(function() {
       return this.config = {
@@ -271,8 +271,8 @@ describe("Parser", function() {
         }
       });
 
-      return it("throws the expected error", function() {
-        return expect(this.e.message).to.eql("Container invalid does not exist");
+      it("throws the expected error", function() {
+        expect(this.e.message).to.eql("Container invalid does not exist");
       });
     });
 
@@ -289,23 +289,23 @@ describe("Parser", function() {
 
       it("assigns the correct containers to the cluster", function() {
         expect(this.config.clusters.cluster.containers).to.be.an("array");
-        return expect(this.config.clusters.cluster.containers).to.have.lengthOf(1);
+        expect(this.config.clusters.cluster.containers).to.have.lengthOf(1);
       });
 
       it("assigns the correct name to the cluster's container", function() {
-        return expect(this.config.clusters.cluster.containers[0].name).to.eql("test");
+        expect(this.config.clusters.cluster.containers[0].name).to.eql("test");
       });
 
       it("assigns the correct initial count to the cluster's container", function() {
-        return expect(this.config.clusters.cluster.containers[0].count).to.eql(1);
+        expect(this.config.clusters.cluster.containers[0].count).to.eql(1);
       });
 
-      return it("assigns an object property to the cluster's container", function() {
-        return expect(this.config.clusters.cluster.containers[0].object).to.be.an("object");
+      it("assigns an object property to the cluster's container", function() {
+        expect(this.config.clusters.cluster.containers[0].object).to.be.an("object");
       });
     });
 
-    return describe("shorthand notation", function() {
+    describe("shorthand notation", function() {
 
       beforeEach(function() {
         this.config.clusters = {
@@ -314,9 +314,9 @@ describe("Parser", function() {
         return Parser.load(this.config);
       });
 
-      return it("assigns the correct containers to the cluster", function() {
+      it("assigns the correct containers to the cluster", function() {
         expect(this.config.clusters.cluster.containers).to.be.an("array");
-        return expect(this.config.clusters.cluster.containers).to.have.lengthOf(1);
+        expect(this.config.clusters.cluster.containers).to.have.lengthOf(1);
       });
     });
   });

@@ -12,10 +12,10 @@ Decking = require("../lib/decking");
 describe("Decking", function() {
 
   it("is a function", function() {
-    return expect(Decking).to.be.a("function");
+    expect(Decking).to.be.a("function");
   });
 
-  return describe("When invoked", function() {
+  describe("When invoked", function() {
 
     describe("Without any options", function() {
 
@@ -24,15 +24,15 @@ describe("Decking", function() {
       });
 
       it("returns an object", function() {
-        return expect(this.decking).to.be.an.object;
+        expect(this.decking).to.be.an.object;
       });
 
       it("has no command property", function() {
-        return expect(this.decking.command).to.be.undefined;
+        expect(this.decking.command).to.be.undefined;
       });
 
-      return it("has an empty arguments array", function() {
-        return expect(this.decking.args).to.eql([]);
+      it("has an empty arguments array", function() {
+        expect(this.decking.args).to.eql([]);
       });
     });
 
@@ -44,11 +44,11 @@ describe("Decking", function() {
       });
 
       it("has the correct command property", function() {
-        return expect(this.decking.command).to.eql("foo");
+        expect(this.decking.command).to.eql("foo");
       });
 
-      return it("has an empty arguments array", function() {
-        return expect(this.decking.args).to.eql([]);
+      it("has an empty arguments array", function() {
+        expect(this.decking.args).to.eql([]);
       });
     });
 
@@ -60,15 +60,15 @@ describe("Decking", function() {
       });
 
       it("has no command property", function() {
-        return expect(this.decking.command).to.be.undefined;
+        expect(this.decking.command).to.be.undefined;
       });
 
-      return it("has an empty arguments array", function() {
-        return expect(this.decking.args).to.eql(["foo"]);
+      it("has an empty arguments array", function() {
+        expect(this.decking.args).to.eql(["foo"]);
       });
     });
 
-    return describe("With both options", function() {
+    describe("With both options", function() {
       beforeEach(function() {
         return this.decking = new Decking({
           command: "foo",
@@ -77,11 +77,11 @@ describe("Decking", function() {
       });
 
       it("has the correct command property", function() {
-        return expect(this.decking.command).to.eql("foo");
+        expect(this.decking.command).to.eql("foo");
       });
 
-      return it("has an empty arguments array", function() {
-        return expect(this.decking.args).to.eql(["bar"]);
+      it("has an empty arguments array", function() {
+        expect(this.decking.args).to.eql(["bar"]);
       });
     });
   });
@@ -116,8 +116,8 @@ describe("Instance methods", function() {
         beforeEach(function() {
           return this.execute();
         });
-        return it("should invoke the help method", function() {
-          return expect(this.stub).to.have.been.called;
+        it("should invoke the help method", function() {
+          expect(this.stub).to.have.been.called;
         });
       });
 
@@ -125,17 +125,17 @@ describe("Instance methods", function() {
         beforeEach(function() {
           return this.execute("-h");
         });
-        return it("should invoke the help method", function() {
-          return expect(this.stub).to.have.been.called;
+        it("should invoke the help method", function() {
+          expect(this.stub).to.have.been.called;
         });
       });
 
-      return describe("with --help", function() {
+      describe("with --help", function() {
         beforeEach(function() {
           return this.execute("--help");
         });
-        return it("should invoke the help method", function() {
-          return expect(this.stub).to.have.been.called;
+        it("should invoke the help method", function() {
+          expect(this.stub).to.have.been.called;
         });
       });
     });
@@ -152,12 +152,12 @@ describe("Instance methods", function() {
         }
       });
 
-      return it("throws the expected error", function() {
-        return expect(this.e.message).to.eql("Unknown method foo");
+      it("throws the expected error", function() {
+        expect(this.e.message).to.eql("Unknown method foo");
       });
     });
 
-    return describe("with no local decking.json file", function() {
+    describe("with no local decking.json file", function() {
 
       beforeEach(function() {
         var e;
@@ -169,13 +169,13 @@ describe("Instance methods", function() {
         }
       });
 
-      return it("throws the expected error", function() {
-        return expect(this.e.message).to.eql("ENOENT, no such file or directory './decking.json'");
+      it("throws the expected error", function() {
+        expect(this.e.message).to.eql("ENOENT, no such file or directory './decking.json'");
       });
     });
   });
 
-  return describe("hasArg", function() {
+  describe("hasArg", function() {
 
     beforeEach(function() {
       return this.decking = new Decking;
@@ -188,20 +188,20 @@ describe("Instance methods", function() {
         return this.result = this.decking.hasArg("myarg");
       });
 
-      return it("returns true", function() {
-        return expect(this.result).to.be["true"];
+      it("returns true", function() {
+        expect(this.result).to.be["true"];
       });
     });
 
-    return describe("When the argument does not exist", function() {
+    describe("When the argument does not exist", function() {
 
       beforeEach(function() {
         this.decking.args = ["foo", "myarg"];
         return this.result = this.decking.hasArg("somearg");
       });
 
-      return it("returns true", function() {
-        return expect(this.result).to.be["false"];
+      it("returns true", function() {
+        expect(this.result).to.be["false"];
       });
     });
   });

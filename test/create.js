@@ -42,8 +42,8 @@ describe("create method", function() {
         return this.decking.execute(done);
       });
 
-      return it("works", function() {
-        return expect(0).to.eql(1);
+      it("works", function() {
+        expect(0).to.eql(1);
       });
     });
   });
