@@ -4,31 +4,29 @@
   "description": "A Docker helper to create, manage and run clusters of containers",
   "main": "index.js",
   "preferGlobal": true,
-  "scripts": {
-    "prepublish": "grunt"
-  },
   "repository": {
     "type": "git",
     "url": "http://github.com/makeusabrew/decking.git"
   },
   "bin": {
-    "decking": "./bin/decking.js"
+    "decking": "./bin/decking"
   },
   "author": "Nick Payne",
   "license": "MIT",
+  "dependencies": {
+    "async": "~0.2.9",
+    "colors": "~0.6.2",
+    "deptree": "~0.1.0",
+    "dockerode": "~1.2.7",
+    "JSONStream": "~0.7.1",
+    "lodash": "~2.4.1",
+    "read": "~1.0.5"
+  },
   "devDependencies": {
     "grunt": "~0.4.2",
     "grunt-simple-mocha": "~0.4.0",
     "chai": "~1.8.1",
     "sinon-chai": "~2.4.0",
     "sinon": "~1.7.3"
-  },
-  "dependencies": {
-    "async": "~0.2.9",
-    "deptree": "~0.1.0",
-    "read": "~1.0.5",
-    "JSONStream": "~0.7.1",
-    "dockerode": "~1.2.7",
-    "colors": "~0.6.2"
   }
 }
