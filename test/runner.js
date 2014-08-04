@@ -250,6 +250,25 @@ describe("Runner", function() {
       });
     });
 
+    describe("mount-from", function() {
+
+      describe("with string literals", function() {
+
+        beforeEach(function(done) {
+          return Runner.getArg("mount-from", ["parent"], {}, (function(_this) {
+            return function(err, arg) {
+              _this.arg = arg;
+              return done();
+            };
+          })(this));
+        });
+
+        return it("transforms the values correctly", function() {
+          return expect(this.arg).to.eql(["--volumes-from parent"]);
+        });
+      });
+    });
+
     describe("image", function() {
 
       beforeEach(function(done) {
