@@ -166,7 +166,8 @@ both approaches might look a bit like this:</p>
     "dependencies": [
       "nfconsumer:consumer"
     ],
-    "mount": ["/path/to/host-dir:/path/to/container-dir"]
+    "mount": ["/path/to/host-dir:/path/to/container-dir"],
+    "mount-from": ["nfconsumer"]
   },
   "nfconsumer": "makeusabrew/nodeflakes-consumer"
 }
@@ -180,6 +181,7 @@ supported options are:</p>
 env          &rarr; <b>-e</b>
 dependencies &rarr; <b>-link</b>
 mount        &rarr; <b>-v</b>
+mount-from   &rarr; <b>--volumes-from</b>
 privileged   &rarr; <b>-privileged</b>
 image        &rarr; used as-is
 extra        &rarr; extra runtime arguments, used as-is after the 'image' argument</pre>
