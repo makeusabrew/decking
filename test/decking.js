@@ -156,24 +156,57 @@ describe("Instance methods", function() {
         expect(this.e.message).to.eql("Unknown method foo");
       });
     });
+  });
 
-    describe("with no local decking.json file", function() {
+  describe("loading configuration files", function(){
+    var fs= require("fs");
+    var YAML = require('js-yaml');
+    var decking = new Decking();
+    var spies = {};
 
-      beforeEach(function() {
-        var e;
-        try {
-          return this.execute("create");
-        } catch (_error) {
-          e = _error;
-          return this.e = e;
-        }
-      });
+    beforeEach(function(){
+      spies.existsSync = sinon.stub(fs, "existsSync");
+      spies.readFileSync = sinon.stub(fs, "readFileSync");
+      spies.load = sinon.stub(Parser, "load");
+    });
 
-      it("throws the expected error", function() {
-        expect(this.e.message).to.eql("ENOENT, no such file or directory './decking.json'");
-      });
+    afterEach(function() {
+      for (spy in spies) {
+        spies[spy].restore();
+      }
+    });
+
+    it("throws an exception when both files are present", function() {
+      spies.existsSync.returns(true);
+      expect(decking.loadConfig).to.throw("Both decking.json and decking.yaml have been found. Please remove one.");
+    });
+
+    it("throws an exception when neither files are present", function(){
+      spies.existsSync.returns(false);
+      expect(decking.loadConfig).to.throw("could not find either 'decking.json' or 'decking.yaml'");
+    });
+
+    it("correctly reads decking.json when present", function(){
+      var data = {some:"object"};
+      spies.existsSync.returns(false);
+      spies.existsSync.withArgs("./decking.json").returns(true);
+      spies.readFileSync.returns(JSON.stringify(data));
+
+      decking.loadConfig();
+      expect(spies.load).to.have.been.calledWith(data);
+    });
+
+    it("correctly reads decking.json when present", function(){
+      var data = {some:"object"};
+      spies.existsSync.returns(false);
+      spies.existsSync.withArgs("./decking.yaml").returns(true);
+      spies.readFileSync.returns(YAML.safeDump(data));
+
+      decking.loadConfig();
+      expect(spies.load).to.have.been.calledWith(data);
     });
   });
+
 
   describe("hasArg", function() {
 
