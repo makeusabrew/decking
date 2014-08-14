@@ -20,13 +20,14 @@
     "dockerode": "~1.2.7",
     "JSONStream": "~0.7.1",
     "lodash": "~2.4.1",
-    "read": "~1.0.5"
+    "read": "~1.0.5",
+    "js-yaml": "~3.1.0"
   },
   "devDependencies": {
     "grunt": "~0.4.2",
     "grunt-simple-mocha": "~0.4.0",
     "chai": "~1.8.1",
     "sinon-chai": "~2.4.0",
-    "sinon": "~1.7.3"
+    "sinon": "~1.10.3"
   }
 }
