@@ -242,6 +242,46 @@ describe("Parser", function() {
           expect(this.config.containers.test.aliases).to.eql(["alias1"]);
         });
       });
+
+      describe("when specified in a container override", function() {
+        beforeEach(function() {
+          this.config = {
+            containers: { 
+              test: {
+                image: "image/test"
+              },
+              dep1: {
+                image: "image/dep1"
+              }
+            },
+            clusters: {
+              test: ["dep1"]
+            },
+            groups: {
+              test: {
+                containers: {
+                  test: {
+                    dependencies: ["dep1"]
+                  }
+                }
+              }
+            }
+          };
+          return Parser.load(this.config);
+        });
+
+        it("correctly parses the short dependency form", function() {
+          expect(this.config.groups.test.containers.test.dependencies).to.eql(["dep1"]);
+          expect(this.config.groups.test.containers.test.aliases).to.eql(["dep1"]);
+        });
+
+        it("correctly parses the standard dependency form", function() {
+          this.config.groups.test.containers.test.dependencies = ["dep1:alias1"];
+          Parser.load(this.config);
+          expect(this.config.groups.test.containers.test.dependencies).to.eql(["dep1"]);
+          expect(this.config.groups.test.containers.test.aliases).to.eql(["alias1"]);
+        });
+      });
     });
   });
 
