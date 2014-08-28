@@ -119,6 +119,34 @@ describe("Parser", function() {
     });
   });
 
+  describe("with one or more empty group definitions", function() {
+
+    beforeEach(function() {
+      var e;
+      this.config = {
+        containers: {
+          test: "test/image"
+        },
+        clusters: {
+          test: ["test"]
+        },
+        groups: {
+          test: {}
+        }
+      };
+      try {
+        return Parser.load(this.config);
+      } catch (_error) {
+        e = _error;
+        return this.e = e;
+      }
+    });
+
+    it("throws the correct error", function() {
+      expect(this.e.message).to.eql("Group 'test' specifies no containers or options");
+    });
+  });
+
   describe("basic container definition", function() {
 
     beforeEach(function() {
@@ -240,6 +268,47 @@ describe("Parser", function() {
 
         it("populates the container's aliases correctly", function() {
           expect(this.config.containers.test.aliases).to.eql(["alias1"]);
+        });
+      });
+
+      describe("when specified in a container override", function() {
+        beforeEach(function() {
+          this.config = {
+            containers: {
+              main: {
+                image: "image/test"
+              },
+              dep1: {
+                image: "image/dep1"
+              }
+            },
+            clusters: {
+              test: ["main"]
+            },
+            groups: {
+              test: {
+                containers: {
+                  main: {
+                    dependencies: ["dep1"]
+                  }
+                }
+              }
+            }
+          };
+          return Parser.load(this.config);
+        });
+
+        it("correctly parses the short dependency form", function() {
+          expect(this.config.groups.test.containers.main.dependencies).to.eql(["dep1"]);
+          expect(this.config.groups.test.containers.main.aliases).to.eql(["dep1"]);
+        });
+
+        it("correctly parses the standard dependency form", function() {
+          // @TODO refactor; shouldn't be performing test setup in here
+          this.config.groups.test.containers.main.dependencies = ["dep1:alias1"];
+          Parser.load(this.config);
+          expect(this.config.groups.test.containers.main.dependencies).to.eql(["dep1"]);
+          expect(this.config.groups.test.containers.main.aliases).to.eql(["alias1"]);
         });
       });
     });
