@@ -212,6 +212,9 @@ containers:
       - mongodb:db
 ```
 
+
+Docker then constructs environment variables such as `DB_PORT_27017_TCP_ADDR=172.17.0.82` -- [read more about container linking here](https://docs.docker.com/userguide/dockerlinks/#environment-variables)
+
 ### `port`: Publish ports to the docker machine
 
 Pairs a port on the docker host machine with a port exposed in the container (using `EXPOSE [portnum]` in the Dockerfile).
@@ -278,6 +281,13 @@ Names will be suitably scoped to the cluster: the web.dev machine mounts volumes
 ### ` extra`: Other arguments to supply the entrypoint script
 
 The decking.yaml file shows an  example, passing two configuration args to the mongodb runner.
+
+```yaml
+containers:
+  mongodb:
+    image:        makeusabrew/mongodb
+    extra:        "--noprealloc --smallfiles"
+```
 
 ### ` privileged`:  Run in privileged mode
 
