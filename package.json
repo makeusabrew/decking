@@ -14,20 +14,20 @@
   "author": "Nick Payne",
   "license": "MIT",
   "dependencies": {
-    "JSONStream": "~0.7.1",
-    "async": "~0.2.9",
-    "colors": "~0.6.2",
+    "JSONStream": "^0.10.0",
+    "async": "^0.9.0",
+    "colors": "^1.0.3",
     "deptree": "~0.1.0",
     "dockerode": "^2.0.7",
-    "js-yaml": "~3.1.0",
-    "lodash": "~2.4.1",
+    "js-yaml": "^3.2.6",
+    "lodash": "^3.2.0",
     "read": "~1.0.5"
   },
   "devDependencies": {
-    "grunt": "~0.4.2",
+    "chai": "^2.0.0",
+    "grunt": "^0.4.5",
     "grunt-simple-mocha": "~0.4.0",
-    "chai": "~1.8.1",
-    "sinon-chai": "~2.4.0",
-    "sinon": "~1.10.3"
+    "sinon": "^1.12.2",
+    "sinon-chai": "^2.7.0"
   }
 }
