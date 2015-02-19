@@ -21,7 +21,8 @@
     "dockerode": "^2.0.7",
     "js-yaml": "^3.2.6",
     "lodash": "^3.2.0",
-    "read": "~1.0.5"
+    "read": "~1.0.5",
+    "tcp-port-used": "^0.1.2"
   },
   "devDependencies": {
     "chai": "^2.0.0",
