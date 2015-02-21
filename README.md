@@ -16,6 +16,7 @@ the most up-to-date documentation is [decking.io](http://decking.io).
 
 * Add `--as` CLI option to suport arbitrary group aliases
 * Add `ready` container parameter to signal when service has started
+* Add `--tag` CLI option when building images
 * No more copying Dockerfiles around when building images
 * Fix bad image builds silently exiting leaving 'ghost' containers
 * Add `context` image parameter to allow arbitrary build context directories
