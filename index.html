@@ -98,6 +98,16 @@ expected. Entire clusters of containers can be started, stopped or attached to
 with a single command, without having to worry about (re)starting them in
 dependency order.</p>
 
+<h3>
+<a name="why-not-fig" class="anchor"><span class="octicon octicon-link"></span></a>Why not Fig / Docker Compose?</h2>
+
+<p>Decking actually
+<a href="https://github.com/docker/fig/commit/0eb7d308615bae1ad4be1ca5112ac7b6b6cbfbaf">predates Fig</a> (recently renamed
+to &lsquo;Docker Compose&rsquo;)
+<a href="https://github.com/meetfinch/decking/commit/a4dff2ea3b2a571acbbf04e00f9bb6f90cb1f01a">by about a month</a>
+and for quite some time offered more functionality; to this day the projects still have their own
+idiosyncracies and unique features. Decking will continue to exist as long as people want to use it!</p>
+
 <h2>
 <a name="format" class="anchor"><span class="octicon octicon-link"></span></a>The decking.json file format</h2>
 
@@ -510,7 +520,11 @@ ensure they have different names.</p>
 
           <ul>
             <li><a href=#installation>Installation</a></li>
-            <li><a href=#about>Why decking?</a></li>
+            <li><a href=#about>Why decking?</a>
+              <ul class="nested">
+                <li><a href="#why-not-fig">Why not Fig?</a></li>
+              </ul>
+            </li>
             <li><a href=#format>The decking.json format</a>
               <ul class="nested">
                 <li><a href="#format-images">images</a></li>
