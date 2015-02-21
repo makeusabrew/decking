@@ -17,7 +17,7 @@
     "JSONStream": "^0.10.0",
     "async": "^0.9.0",
     "colors": "^1.0.3",
-    "deptree": "~0.1.0",
+    "dependency-graph": "^0.1.0",
     "dockerode": "^2.0.7",
     "js-yaml": "^3.2.6",
     "lodash": "^3.2.0",
