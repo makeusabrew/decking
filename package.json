@@ -1,12 +1,12 @@
 {
   "name": "decking",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A Docker helper to create, manage and run clusters of containers",
   "main": "index.js",
   "preferGlobal": true,
   "repository": {
     "type": "git",
-    "url": "http://github.com/makeusabrew/decking.git"
+    "url": "http://github.com/meetfinch/decking.git"
   },
   "bin": {
     "decking": "./bin/decking"
