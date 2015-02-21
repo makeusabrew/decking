@@ -13,7 +13,7 @@ describe("Runner", function() {
 
   it("exposes the correct methods", function() {
     expect(Runner.getArg).to.be.a("function");
-    expect(Runner.sortArgs).to.be.a("function");
+    expect(Runner.filterArgs).to.be.a("function");
     return expect(Runner.formatArgs).to.be.a("function");
   });
 
@@ -319,7 +319,7 @@ describe("Runner", function() {
     });
   });
 
-  describe("sortArgs", function() {
+  describe("filterArgs", function() {
 
     describe("given an object with keys out of order", function() {
 
@@ -330,7 +330,7 @@ describe("Runner", function() {
           extra: "foo bar",
           env: "FOO=bar"
         };
-        return this.result = Runner.sortArgs(object);
+        return this.result = Runner.filterArgs(object);
       });
 
       return it("returns a correctly ordered object", function() {
@@ -351,7 +351,7 @@ describe("Runner", function() {
           env: "FOO=bar",
           unknown: "key"
         };
-        return this.result = Runner.sortArgs(object);
+        return this.result = Runner.filterArgs(object);
       });
 
       return it("returns a correctly filtered object", function() {
