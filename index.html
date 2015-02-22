@@ -413,10 +413,10 @@ re run each time a container is restarted.</p>
 
 <p>All cluster-related commands take an optional <code>--as &lt;alias&gt;</code>
 argument. This is particularly useful when wanting to create multiple
-clusters based on the same group definition but running as physically isolated
+clusters based on the same group definition but running as physically separate
 sets of containers. The most common use-case is during continuous integration builds
 where the <code>--as</code> parameter can be supplied as the build number to spin
-up and tear down a completely isolated cluster per build:</p>
+up and tear down a completely new cluster per build:</p>
 
 <pre>decking create ci --as $BUILD_NUMBER
 decking start ci --as $BUILD_NUMBER
