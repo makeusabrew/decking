@@ -150,8 +150,8 @@ as values in to build an image from the Docker Index instead.</p>
 of your project (the directory containing your decking.json file) will
 be provided as Docker&rsquo;s &lsquo;build context&rsquo; such
 that any <code>ADD</code> or <code>COPY</code> directives will
-be relative to your project root. This
-build context is configurable when declaring your images:</p>
+be relative to this top-level directory. However, this context
+is configurable on an image-by-image basis:</p>
 
 <pre><code>"images": {
   "makeusabrew/nodeflakes": {
@@ -168,8 +168,10 @@ build context is configurable when declaring your images:</p>
 </code></pre>
 
 <p>Note the use of the dot character in the second example; this is simply a
-shorthand indicating that the context should be taken from wherever the Dockerfile
-is located (i.e. the same as the <code>path</code> parameter).</p>
+shorthand indicating that the context should be the same as the <code>path</code>
+parameter (i.e. relative to wherever the Dockerfile lives). Use this setting
+if you always want <code>decking build</code> to work the same way as
+<code>docker build</code>.</p>
 
 <h3>
 <a name="format-containers" class="anchor"><span class="octicon octicon-link"></span></a>containers</h3>
