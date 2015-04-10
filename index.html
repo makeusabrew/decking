@@ -371,9 +371,12 @@ uses group-level overrides if specified by the cluster definition. This method i
 times; it will only create the containers in the cluster which don&rsquo;t already exist.</p>
 
 <h3>
-<a name="commands-destroy" class="anchor"><span class="octicon octicon-link"></span></a>destroy [cluster] [--as &lt;alias&gt;]</h3>
+<a name="commands-destroy" class="anchor"><span class="octicon octicon-link"></span></a>destroy [cluster] [--as &lt;alias&gt;] [--include-data] [--include-persistent] [--include-volumes]</h3>
 
-<p>Destroys all containers for a given cluster. Use with appropriate caution!</p>
+<p>Destroys all containers for a given cluster but by default will <b>not</b> destroy any data
+containers, nor those marked as persistent (e.g. those where <code>persistent: true</code>). Use
+of any or all of the optional <code>--include-xxx</code> parameters will make this method progressively
+more destructive.</p>
 
 <h3>
 <a name="commands-start" class="anchor"><span class="octicon octicon-link"></span></a>start [cluster] [--as &lt;alias&gt;]</h3>
@@ -639,7 +642,7 @@ ensure they have different names.</p>
 
           <a href="https://npmjs.org/package/decking" class="button">
             <small>Download via npm</small>
-            v0.4.0
+            v0.5.0
           </a>
           <p style="text-align:center;">
             <a href="https://meetfinch.com"><img src="./images/finch.svg" alt="Finch logo" /></a>
