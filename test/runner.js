@@ -183,6 +183,26 @@ describe("Runner", function() {
       });
     });
 
+    describe("restart", function() {
+
+      describe("with string literals", function() {
+
+        beforeEach(function(done) {
+          return Runner.getArg("restart", "always", {}, (function(_this) {
+            return function(err, arg) {
+              _this.arg = arg;
+              return done();
+            };
+          })(this));
+        });
+
+        return it("transforms the value correctly", function() {
+          return expect(this.arg).to.eql(["--restart always"]);
+        });
+      });
+
+    });
+
     describe("mount", function() {
 
       describe("with string literals", function() {
